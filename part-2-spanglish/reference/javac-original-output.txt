@@ -1,0 +1,11 @@
+com/assemblyai/Spanglish.java:45: error: cannot find symbol
+        StreamingTranscription transcription = new StreamingTranscription();
+        ^
+  symbol:   class StreamingTranscription
+  location: class Spanglish
+com/assemblyai/Spanglish.java:45: error: cannot find symbol
+        StreamingTranscription transcription = new StreamingTranscription();
+                                                   ^
+  symbol:   class StreamingTranscription
+  location: class Spanglish
+2 errors

@@ -1,0 +1,23 @@
+# Java build output and downloaded dependencies
+part-2-spanglish/code/java/out/
+part-2-spanglish/code/java/lib/
+target/
+*.class
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# Generated audio and recordings
+*.wav
+*.aiff
+
+# Secrets
+.env
+.env.*
+
+# macOS
+.DS_Store
+part-2-spanglish/00-DEMO-SCRIPT.md

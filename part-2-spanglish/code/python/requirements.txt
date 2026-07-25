@@ -1,0 +1,5 @@
+# repro.py — the four-config reproduction harness
+websocket-client>=1.5.1
+
+# production_client.py — async reference client (rollover, backoff+jitter, backpressure)
+websockets>=12.0
