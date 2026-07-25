@@ -2,7 +2,41 @@
 
 **Loom walkthrough:** [add link here]
 
-Two parts. Part 2 is complete. Part 1 is in progress.
+Two parts, both complete.
+
+- **[Part 1: iTranslate demo](part-1-itranslate/)**, build a demo and document the approach for
+  a handheld translation device that needs better speech-to-text accuracy.
+- **[Part 2: Spanglish Inc.](part-2-spanglish/)**, a production customer says streaming
+  "doesn't work at all." Fix it, explain it, and scale them to 2,000 streams.
+
+---
+
+## Part 1: iTranslate demo
+
+**The ask.** A handheld translator with no GPU but with wifi and cellular. It transcribes
+speech, translates it, and speaks the result. They want better transcription accuracy.
+
+**What I found.** They asked for accuracy. The bigger opportunity is that their device needs a
+language button, because a language-pinned recognizer has to be told what's coming before
+someone speaks. Universal-3.5 Pro switches languages mid-sentence inside one session, so the
+button can go away. Two people just pick it up and talk.
+
+**The largest accuracy lever is one almost nobody turns on.** Sending the model a description of
+the situation cuts word error rate 21% and errors on people's names 49%, per AssemblyAI's own
+benchmark. A handheld knows its GPS location, the selected topic, and what was said 30 seconds
+ago, so it can build that description automatically on every session.
+
+| Deliverable | File |
+|---|---|
+| Approach: architecture, latency, bandwidth, cost, rollout | [01-approach.md](part-1-itranslate/01-approach.md) |
+| Accuracy playbook: 8 levers ranked by return | [02-accuracy-playbook.md](part-1-itranslate/02-accuracy-playbook.md) |
+| Device simulator (Python) | [translator.py](part-1-itranslate/demo/device/translator.py) |
+| Token broker and translation proxy (TypeScript) | [server.ts](part-1-itranslate/demo/backend/src/server.ts) |
+| Accuracy benchmark harness (Python) | [accuracy_bench.py](part-1-itranslate/demo/bench/accuracy_bench.py) |
+
+Two things they didn't ask about: streaming bills on **connection time, not audio sent**, which
+at fleet scale is a 6x cost difference depending on session policy. And Opus encoding cuts
+bandwidth about **tenfold**, which matters a lot on a battery-powered cellular device.
 
 ---
 
@@ -46,13 +80,27 @@ report had no detail. They weren't being unhelpful, they genuinely couldn't see 
 
 ---
 
-## Part 1: iTranslate demo
-
-In progress.
-
----
-
 ## Running the code
+
+### Part 1
+
+```bash
+cd part-1-itranslate/demo/device
+pip install -r requirements.txt
+export ASSEMBLYAI_API_KEY=your_key
+
+# no microphone needed, reuses the bilingual sample from Part 2
+python3 translator.py --pair en,es \
+  --file ./././part-2-spanglish/code/python/sample_bilingual.wav
+```
+
+```bash
+# TypeScript backend
+cd part-1-itranslate/demo/backend
+npm install && npx tsc --noEmit    # typechecks clean, no key needed
+```
+
+### Part 2
 
 **See the original fail, then see the fix compile:**
 

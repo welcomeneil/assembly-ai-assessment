@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 """
-Spanglish Inc. — reproduction harness.
+Spanglish Inc. reproduction harness.
 
 Streams the SAME audio file through four configurations so you can watch each bug
 fire in isolation and then watch the fixed config work. This is the artifact that
 turns "your product doesn't work" into a specific, agreed-upon root cause.
 
-    export ASSEMBLYAI_API_KEY=...
+    export ASSEMBLYAI_API_KEY=..
     python3 repro.py sample_bilingual.wav              # run all four
     python3 repro.py sample_bilingual.wav --only broken
 
@@ -95,7 +95,7 @@ CLOSE_CODES = {
 
 
 def read_pcm(path: str) -> bytes:
-    """Load a WAV and assert it is 16 kHz mono 16-bit — the format the URL will claim."""
+    """Load a WAV and assert it is 16 kHz mono 16-bit, the format the URL will claim."""
     with wave.open(path, "rb") as w:
         if (w.getnchannels(), w.getsampwidth(), w.getframerate()) != (1, 2, 16000):
             sys.exit(
@@ -111,7 +111,7 @@ def run_config(name: str, cfg: dict, pcm: bytes) -> dict:
     chunk_bytes = int(16000 * (cfg["chunk_ms"] / 1000.0)) * 2  # 16 kHz, 2 bytes/sample
 
     print("\n" + "=" * 78)
-    print(f"CONFIG: {name}  —  {cfg['label']}")
+    print(f"CONFIG: {name}, {cfg['label']}")
     print(f"  url         {url}")
     print(f"  chunk       {cfg['chunk_ms']} ms / {chunk_bytes} bytes")
     print(f"  expecting   {cfg['expect']}")
@@ -156,7 +156,7 @@ def run_config(name: str, cfg: dict, pcm: bytes) -> dict:
             print(f"  [Termination] audio={msg.get('audio_duration_seconds')}s "
                   f"session={msg.get('session_duration_seconds')}s")
         else:
-            # Never swallow unknown types — this is where the server tells you what is wrong.
+            # Never swallow unknown types, this is where the server tells you what is wrong.
             print(f"  [{t}] {raw}")
 
     def on_error(ws, err):

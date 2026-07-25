@@ -13,7 +13,7 @@ cd "$(dirname "$0")"
 WORK=$(mktemp -d)
 trap 'rm -rf "$WORK"' EXIT
 
-# voice : text  — a plausible direct examination with a Spanish-language interpreter
+# voice : text, a plausible direct examination with a Spanish-language interpreter
 LINES=(
   "Samantha|Mister Reyes, where were you on the evening of March fourteenth?"
   "Paulina|Señor Reyes, ¿dónde estaba usted la noche del catorce de marzo?"
@@ -37,7 +37,7 @@ for line in "${LINES[@]}"; do
 done
 
 # Concatenate, then normalise once more to be certain of 16 kHz / mono / 16-bit,
-# because repro.py hard-asserts that format (as it should — the whole bug class here
+# because repro.py hard-asserts that format (as it should, the whole bug class here
 # is audio that isn't the format the URL claims it is).
 python3 - "$@" <<'PY' "${FILES[@]}"
 import sys, wave

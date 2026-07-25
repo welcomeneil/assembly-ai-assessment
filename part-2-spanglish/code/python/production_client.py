@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """
-Spanglish Inc. — reference client for running Universal-Streaming at 2,000 concurrent streams.
+Spanglish Inc. reference client for running Universal-Streaming at 2,000 concurrent streams.
 
-The Java file in ../java is the minimal fix to what Spanglish sent us: one session, one
-microphone. This file is the other half of the answer — the patterns you need when the same
+The Java file in ./java is the minimal fix to what Spanglish sent us: one session, one
+microphone. This file is the other half of the answer, the patterns you need when the same
 code runs 2,000 times at once against real courtrooms.
 
 Five things this demonstrates that a single-session client does not need:
@@ -14,7 +14,7 @@ Five things this demonstrates that a single-session client does not need:
   2. BACKOFF ON 3009 with full jitter. The new-session rate limit is per-minute; a thundering
      herd of synchronised retries is what turns a brief throttle into an outage.
   3. BOUNDED BACKPRESSURE. Audio capture must never block on the network. Drop oldest and
-     count the drops as a metric — a silent drop is worse than a visible one.
+     count the drops as a metric, a silent drop is worse than a visible one.
   4. KEEPALIVE during silence, so recesses and sidebars do not kill the session (close 3006).
   5. STRUCTURED SESSION TELEMETRY keyed on the server's session id, which is the correlation
      id AssemblyAI support needs.
@@ -40,7 +40,7 @@ import websockets
 log = logging.getLogger("spanglish.stt")
 
 # Pin the Data Zone. The bare `streaming.assemblyai.com` host is edge-routed for latency and
-# carries NO data-residency guarantee — the wrong default for court audio.
+# carries NO data-residency guarantee, the wrong default for court audio.
 HOST = os.environ.get("AAI_STREAMING_HOST", "streaming.us.assemblyai.com")
 
 SAMPLE_RATE = 16_000
@@ -57,7 +57,7 @@ KEEPALIVE_INTERVAL = 20.0                         # seconds of silence before a 
 
 @dataclass
 class StreamConfig:
-    """Connection parameters. Everything here is explicit on purpose — see FIX #4 in the Java
+    """Connection parameters. Everything here is explicit on purpose, see FIX #4 in the Java
     file: never let a production stream inherit an account-level default that can move."""
     speech_model: str = "universal-3-5-pro"       # alias: u3-rt-pro. $0.45/hr of open socket.
     language_codes: str = "en,es"                 # bias en+es, keep native code-switching
@@ -165,7 +165,7 @@ class StreamingSession:
             self._last_send = time.monotonic()
 
     async def terminate(self) -> None:
-        """Terminate flushes the open turn. Skipping it loses the last sentence — and because
+        """Terminate flushes the open turn. Skipping it loses the last sentence, and because
         billing runs on socket open-to-close, leaving it open costs money for nothing."""
         if not self.ws:
             return
@@ -298,14 +298,14 @@ class ResilientTranscriber:
                 self.on_turn(msg)
             elif msg.get("type") == "SpeakerRevision":
                 # Retroactive speaker corrections. For a court record, persist turns by
-                # turn_order and APPLY these — converged labels beat the first guess.
+                # turn_order and APPLY these, converged labels beat the first guess.
                 self.on_turn(msg)
 
 
 async def ramp(total_streams: int, per_minute_budget: int) -> None:
     """Model the cold-start ramp before you run it against production.
 
-    The limit that governs 2,000 concurrent streams is NOT a concurrency cap — AssemblyAI does
+    The limit that governs 2,000 concurrent streams is NOT a concurrency cap. AssemblyAI does
     not cap total open sessions. It caps NEW SESSIONS PER MINUTE, and auto-scales that budget
     up ~10% per minute while you are above 70% utilisation. So a cold start to 2,000 from a
     100/min budget takes roughly 12 minutes of compounding. Pre-provisioning the budget with

@@ -26,19 +26,19 @@ CP="lib/*"
 
 if [[ "${1:-}" == "original" ]]; then
   # Demonstrates defect #1: the file as sent does not compile.
-  echo "Compiling the ORIGINAL customer file — this is expected to FAIL:"
+  echo "Compiling the ORIGINAL customer file, this is expected to FAIL:"
   echo
-  javac -cp "$CP" -d /tmp/spanglish-original ../../reference/original/com/assemblyai/Spanglish.java \
+  javac -cp "$CP" -d /tmp/spanglish-original ././reference/original/com/assemblyai/Spanglish.java \
     && { echo "UNEXPECTED: the original compiled."; exit 1; } \
     || { echo; echo "^ Expected. Defect #1: main() instantiates StreamingTranscription, which does not exist."; exit 0; }
 fi
 
-echo "Compiling fixed client..."
+echo "Compiling fixed client.."
 javac -Xlint:all -cp "$CP" -d out src/main/java/com/assemblyai/Spanglish.java
 echo "OK -> out/com/assemblyai/Spanglish.class"
 
 if [[ "${1:-}" == "run" ]]; then
   : "${ASSEMBLYAI_API_KEY:?Set ASSEMBLYAI_API_KEY first}"
-  echo "Running (Ctrl+C to stop)..."
+  echo "Running (Ctrl+C to stop).."
   java -cp "out:$CP" com.assemblyai.Spanglish
 fi

@@ -1,4 +1,4 @@
-# Data privacy and retention — answers for Spanglish Inc.
+# Data privacy and retention, answers for Spanglish Inc.
 
 > Customer-facing; written to be forwarded to a security reviewer unedited.
 >
@@ -6,7 +6,7 @@
 > behaviour and published compliance posture as of July 2026. Documented behaviour is not a
 > contractual commitment. Items requiring contractual confirmation are marked
 > **[CONFIRM IN CONTRACT]**, and I will drive those with your AE and our legal team rather than
-> leaving you to chase them. Your reviewers will draw that distinction anyway — better that we
+> leaving you to chase them. Your reviewers will draw that distinction anyway, better that we
 > draw it first.
 
 ---
@@ -20,14 +20,14 @@ Direct answer, in three parts:
 1. **For Streaming: we offer zero data retention of audio and transcripts, conditional on your
    account being opted out of model training.** Session metadata (session ID, duration) is
    retained for billing and logging. Audio and transcript text are not.
-2. **For your existing async workload the answer is different** — async retains by default, and
+2. **For your existing async workload the answer is different**, async retains by default, and
    this is where your real exposure is today. See §3.
 3. **Confidence should not rest on our word.** §7 lists the verification and contractual steps
    that convert this from an assurance into an obligation.
 
 ---
 
-## 1. Streaming — zero data retention
+## 1. Streaming, zero data retention
 
 Per AssemblyAI's published FAQ: *"If you are opted out of model training, we offer zero data
 retention of audio and transcripts for our Streaming product."* And: *"Certain metadata about
@@ -37,11 +37,11 @@ the transcript is stored and maintained for logging and billing purposes."*
 |---|---|
 | Audio streamed over the WebSocket | **No** |
 | Transcript text returned over the WebSocket | **No** |
-| Session metadata (session ID, duration, timestamps) | Yes — billing and logging |
+| Session metadata (session ID, duration, timestamps) | Yes, billing and logging |
 
 Two conditions attach, and both matter:
 
-**Condition 1 — model training opt-out.** Zero retention for Streaming is *conditional* on it.
+**Condition 1, model training opt-out.** Zero retention for Streaming is *conditional* on it.
 Two constraints your reviewers will ask about:
 - Opt-out is **not available on free accounts**. It requires a paid plan.
 - Opt-out is **forward-looking only** and cannot be applied retroactively.
@@ -49,14 +49,14 @@ Two constraints your reviewers will ask about:
 **Action:** I am confirming your account's current opt-out status this week and will send
 written confirmation. **[CONFIRM IN CONTRACT]**
 
-**Condition 2 — you must not enable features that create artifacts.** Streaming webhooks
+**Condition 2, you must not enable features that create artifacts.** Streaming webhooks
 (§6) transmit the finalised transcript to an endpoint you control. That is your data in your
 infrastructure, but it means "nothing is retained" becomes "nothing is retained *by
 AssemblyAI*." Make sure your reviewers understand where that boundary sits.
 
 ---
 
-## 2. Data residency — change this now
+## 2. Data residency, change this now
 
 Your snippet connects to `wss://streaming.assemblyai.com/v3/ws`. That host is **edge-routed for
 lowest latency across Oregon, Virginia, and Ireland, and carries no data-residency guarantee.**
@@ -77,7 +77,7 @@ priority item in this document after the opt-out confirmation.
 
 ---
 
-## 3. Your async workload — where the actual exposure is
+## 3. Your async workload, where the actual exposure is
 
 You are already in production on async, and **async does not default to zero retention.** This
 is the gap your security review should focus on, and nobody has raised it with you yet.
@@ -88,7 +88,7 @@ is the gap your security review should focus on, and nobody has raised it with y
 | Final transcription artifacts | Default **72-hour** TTL, configurable **down to 1 hour** |
 
 Deletion uses AWS DynamoDB's TTL mechanism, so the process begins at TTL expiry and completes
-subject to AWS's own processing window — "begins at" rather than "instant at."
+subject to AWS's own processing window, "begins at" rather than "instant at."
 
 **Three things you can do about it:**
 
@@ -106,15 +106,15 @@ subject to AWS's own processing window — "begins at" rather than "instant at."
 | Standard | Status |
 |---|---|
 | SOC 2 Type 1 | Certified |
-| SOC 2 Type 2 | Certified — independent audit of controls over time |
+| SOC 2 Type 2 | Certified, independent audit of controls over time |
 | GDPR | Third-party assessment completed; DPA available |
 | PCI-DSS 4.0 Level 1 | Compliant as of 2025-03-31 |
 | EU data residency | Available (Dublin, `eu-west-1`) |
-| BAA / HIPAA | Available under enterprise agreement — **[CONFIRM IN CONTRACT]** |
+| BAA / HIPAA | Available under enterprise agreement, **[CONFIRM IN CONTRACT]** |
 
 **On HIPAA specifically:** AssemblyAI's zero-retention documentation references customers with
 "an executed BAA," so BAAs are offered. The public security page does not itemise HIPAA
-certification, so I am not going to assert it — I'll get you a definitive written answer rather
+certification, so I am not going to assert it. I'll get you a definitive written answer rather
 than a confident guess. Court proceedings are generally not PHI, but medical testimony can be,
 so it's worth settling.
 
@@ -135,7 +135,7 @@ few business days.
 - Paid accounts can opt out of use of Customer Data for AI/ML model training **and** for
   benchmarking.
 - The model training environment is separate from the production environment.
-- Opt-out is **forward-looking only** — it cannot be applied retroactively.
+- Opt-out is **forward-looking only**, it cannot be applied retroactively.
 - Free accounts cannot opt out.
 - AssemblyAI has itself opted out of model training with all LLM Gateway providers.
 
@@ -149,7 +149,7 @@ by an auditor.
 
 | Control | Parameter | Notes for a court context |
 |---|---|---|
-| PII redaction | `redact_pii=true` | Redacts PII from final turns in-flight. Also set `redact_pii_sub` (`entity_name` or `hash`). **Note:** enabling it defaults `include_partial_turns` to false. Whether redaction is appropriate for a legal record is your call — but make it a deliberate one, ideally with counsel. |
+| PII redaction | `redact_pii=true` | Redacts PII from final turns in-flight. Also set `redact_pii_sub` (`entity_name` or `hash`). **Note:** enabling it defaults `include_partial_turns` to false. Whether redaction is appropriate for a legal record is your call, but make it a deliberate one, ideally with counsel. |
 | Profanity filter | `filter_profanity=true` | Almost certainly **not** what you want for a verbatim court record. Listed for completeness. |
 | Data residency | Data Zone endpoint | See §2. |
 | Ephemeral credentials | Temporary tokens | If any client-side code ever connects directly, use short-lived tokens (`expires_in_seconds` 1–600, single-use) rather than shipping an API key. |
@@ -166,10 +166,10 @@ Assurances are a starting point. This is the path to something your auditors wil
 2. **Zero retention for Streaming written into your enterprise agreement.** Public docs are not
    a contract; your reviewers are right to say so.
 3. **Executed DPA**, with the subprocessor list reviewed and a change-notification obligation.
-4. **SOC 2 Type 2 report reviewed under NDA** — read the exceptions section, not just the
+4. **SOC 2 Type 2 report reviewed under NDA**, read the exceptions section, not just the
    opinion.
 5. **Reduced async TTL** agreed in writing if you keep any async workload. **[CONFIRM IN CONTRACT]**
-6. **Data Zone endpoint pinned** in code and verified in your own egress logs — you can confirm
+6. **Data Zone endpoint pinned** in code and verified in your own egress logs, you can confirm
    the destination region independently rather than taking our word for it.
 7. **BAA executed** if any proceeding could involve PHI. **[CONFIRM IN CONTRACT]**
 
@@ -190,7 +190,7 @@ Assurances are a starting point. This is the path to something your auditors wil
 
 ---
 
-**Open items I own** — tracked in [`06-handoff.md`](06-handoff.md):
+**Open items I own**, tracked in [`06-handoff.md`](06-handoff.md):
 
 | # | Item | Owner | Status |
 |---|---|---|---|

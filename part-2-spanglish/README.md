@@ -1,4 +1,4 @@
-# Part 2 — Spanglish Inc. critical issue
+# Part 2. Spanglish Inc. critical issue
 
 **Verdict: no defect in the AssemblyAI streaming service.** Four independent client-side faults
 in the customer's snippet, each individually fatal. Fixed code, customer comms, privacy
@@ -10,13 +10,13 @@ answers, internal summary, and handoff are all below.
 
 | # | Asked for | File |
 |---|---|---|
-| 1 | Fixed code with comments explaining changes | [`code/java/src/main/java/com/assemblyai/Spanglish.java`](code/java/src/main/java/com/assemblyai/Spanglish.java) — every change tagged `// FIX #n` |
+| 1 | Fixed code with comments explaining changes | [`code/java/src/main/java/com/assemblyai/Spanglish.java`](code/java/src/main/java/com/assemblyai/Spanglish.java), every change tagged `// FIX #n` |
 | 2 | Customer-facing email + how to scale to 2,000 streams | [`02-customer-email.md`](02-customer-email.md) + [`03-scaling-to-2000.md`](03-scaling-to-2000.md) |
 | 3 | Answers to data privacy / retention concerns | [`04-data-privacy.md`](04-data-privacy.md) |
 | 4 | Internal summary for engineering | [`05-internal-eng-summary.md`](05-internal-eng-summary.md) |
 | 5 | Handoff document for the returning colleague | [`06-handoff.md`](06-handoff.md) |
 
-Supporting: [`01-root-cause.md`](01-root-cause.md) — the full 23-item defect register that the
+Supporting: [`01-root-cause.md`](01-root-cause.md), the full 23-item defect register that the
 `FIX #n` comments map to.
 
 ---
@@ -28,14 +28,14 @@ Any one of these breaks the stream on its own. All four were present simultaneou
 | # | Fault | Symptom |
 |---|---|---|
 | 1 | `main()` instantiates `StreamingTranscription`, a class that doesn't exist | **Does not compile** |
-| 2 | `encoding=opus` declared while sending raw PCM | Session connects, `Begin` arrives, **no transcript ever** — fails silently |
+| 2 | `encoding=opus` declared while sending raw PCM | Session connects, `Begin` arrives, **no transcript ever**, fails silently |
 | 3 | 25 ms chunks against a 50–1000 ms contract | Close `3007 Input duration violation: 25 ms` |
 | 4 | No `speech_model` pinned → English-only default | Spanish transliterated into English-looking nonsense |
 
 Three edits clear all four:
 
 ```diff
--private static final int FRAMES_PER_BUFFER = 400;   // 25 ms — below the 50 ms minimum
+-private static final int FRAMES_PER_BUFFER = 400;   // 25 ms, below the 50 ms minimum
 +private static final int FRAMES_PER_BUFFER = 800;   // 50 ms
 
 -"wss://streaming.assemblyai.com/v3/ws?sample_rate=%d&encoding=opus&format_turns=true"
@@ -50,7 +50,7 @@ Three edits clear all four:
 compose into a total diagnostic blackout. `default: break;` swallowed our diagnostics, the close
 code printed as a bare integer, an unguarded NPE surfaced as literally
 `Error handling message: null`, and neither `onClose` nor `onError` released the latch `main()`
-was parked on — so the process hung rather than exited. We told them what was wrong four times
+was parked on, so the process hung rather than exited. We told them what was wrong four times
 and the client discarded it every time. Their bug report was terse because that is genuinely all
 the information they had.
 
@@ -61,7 +61,7 @@ the information they had.
 Being explicit, because it matters for how much weight to put on each claim.
 
 **Verified by running it locally:**
-- The original file does **not** compile — JDK 19, 2 errors. Output captured in
+- The original file does **not** compile. JDK 19, 2 errors. Output captured in
   [`reference/javac-original-output.txt`](reference/javac-original-output.txt); reproduce with
   `./code/java/build.sh original`.
 - The fixed Java compiles clean under `-Xlint:all` with zero warnings.
@@ -69,7 +69,7 @@ Being explicit, because it matters for how much weight to put on each claim.
   ~4-minute figures quoted in the scaling guide.
 - `make_sample.sh` generates a valid 24.1 s bilingual courtroom WAV at 16 kHz mono 16-bit.
 
-**Not verified — no API key in this environment:**
+**Not verified, no API key in this environment:**
 - I have not executed any of this against the live AssemblyAI API. The predicted behaviours
   (close `3007`, silent Opus decode failure, English-only output on Spanish audio) are derived
   from AssemblyAI's published API reference and error-code documentation, not observed.
@@ -77,12 +77,11 @@ Being explicit, because it matters for how much weight to put on each claim.
   about two minutes.
 
 **Known unknown, flagged rather than papered over:**
-- AssemblyAI's own docs contradict each other on the default `speech_model` for a bare v3 URL —
-  the API reference says `universal-3-5-pro`, the migration guide says the English model, and
+- AssemblyAI's own docs contradict each other on the default `speech_model` for a bare v3 URL, the API reference says `universal-3-5-pro`, the migration guide says the English model, and
   async defaults are grandfathered by account creation date. **I could not determine which
   default Spanglish's specific account resolves to.** It's observable in one request via the
   `configuration` object in the `Begin` message. Tracked as open item A3 in the internal summary.
-  The recommendation — pin the model explicitly, never inherit a default in production — is
+  The recommendation, pin the model explicitly, never inherit a default in production, is
   correct either way.
 
 ---
@@ -91,15 +90,15 @@ Being explicit, because it matters for how much weight to put on each claim.
 
 ### Repro harness (the demo)
 
-Streams identical audio through four configurations — as-sent, each fix in isolation, fully
-fixed — and prints the close code for each. This is the artifact that turns "your product
+Streams identical audio through four configurations, as-sent, each fix in isolation, fully
+fixed, and prints the close code for each. This is the artifact that turns "your product
 doesn't work" into an agreed root cause.
 
 ```bash
 cd code/python
 pip install -r requirements.txt
 ./make_sample.sh                              # macOS: builds a 24 s EN/ES courtroom sample
-export ASSEMBLYAI_API_KEY=...
+export ASSEMBLYAI_API_KEY=..
 python3 repro.py sample_bilingual.wav         # all four configs
 python3 repro.py sample_bilingual.wav --only broken
 ```
@@ -109,8 +108,8 @@ python3 repro.py sample_bilingual.wav --only broken
 ```bash
 cd code/java
 ./build.sh              # compile (fetches jars on first run)
-./build.sh original     # compile the ORIGINAL — fails, on purpose
-export ASSEMBLYAI_API_KEY=...
+./build.sh original     # compile the ORIGINAL, fails, on purpose
+export ASSEMBLYAI_API_KEY=..
 ./build.sh run          # live microphone
 ```
 

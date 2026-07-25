@@ -10,10 +10,10 @@
   <version>1.0.0</version>
   <packaging>jar</packaging>
 
-  <name>Spanglish Inc. — AssemblyAI Universal-Streaming client</name>
+  <name>Spanglish Inc. AssemblyAI Universal-Streaming client</name>
   <description>
     Corrected reference client for AssemblyAI Universal-Streaming (v3), bilingual EN/ES.
-    See ../../01-root-cause.md for the defect register that maps to the FIX #n comments.
+    See ././01-root-cause.md for the defect register that maps to the FIX #n comments.
   </description>
 
   <properties>
