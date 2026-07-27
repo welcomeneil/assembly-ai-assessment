@@ -2,8 +2,6 @@
 
 **Loom walkthrough:** https://www.loom.com/share/6607bdbd93434df894b15ca77dc11ce8
 
-Two parts, both complete.
-
 | | | |
 |---|---|---|
 | **[Part 1 — iTranslate](part-1-itranslate/)** | Demo + approach for a handheld translator that wants better speech-to-text | [approach](part-1-itranslate/APPROACH.md) · [measurements](part-1-itranslate/demo/fixtures/MEASUREMENTS.md) |
@@ -109,16 +107,3 @@ are directional — which is why the harness ships, not just the numbers.
 rebuild, the scaling math and the sample generator were all run locally; the predicted stream
 behaviours (close `3007`, silent Opus decode failure, English-only output) come from the
 published docs. `repro.py` exists so anyone with a key can confirm or refute them in two minutes.
-
-**One open question I flagged rather than guessed:** AssemblyAI's own docs disagree on which
-`speech_model` a bare v3 URL resolves to. The advice is the same either way — pin it explicitly.
-
----
-
-## Three things neither customer asked about
-
-1. **Sessions hard-close at 3 hours.** Court proceedings run longer. Most likely day-one incident.
-2. **Streaming bills on connection time, not audio sent.** Part 1 shows 21% of a session paid for
-   silence; at 2,000 concurrent streams that's roughly $300–900/hr, idle sockets at full price.
-3. **Async has weaker retention guarantees than the streaming path they asked about.** Streaming
-   keeps nothing; async holds audio 24–48h and transcripts 72h by default.
