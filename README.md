@@ -28,6 +28,7 @@ ago, so it can build that description automatically on every session.
 
 | Deliverable | File |
 |---|---|
+| **Demo brief for the account executive**, the pitch and the six-minute script | [00-demo-brief.md](part-1-itranslate/00-demo-brief.md) |
 | **Dashboard**, the screen you put in front of the customer | [index.html](part-1-itranslate/demo/dashboard/index.html) |
 | Approach: architecture, latency, bandwidth, cost, rollout | [01-approach.md](part-1-itranslate/01-approach.md) |
 | Accuracy playbook: 8 levers ranked by return | [02-accuracy-playbook.md](part-1-itranslate/02-accuracy-playbook.md) |

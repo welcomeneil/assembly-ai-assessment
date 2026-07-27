@@ -32,10 +32,14 @@ with no user involvement.
 
 ## Documents
 
-| File | What it covers |
-|---|---|
-| [01-approach.md](01-approach.md) | Architecture, latency budget, bandwidth and battery, cost model, rollout plan, open risks |
-| [02-accuracy-playbook.md](02-accuracy-playbook.md) | Eight accuracy levers ranked by return, with expected impact and how to verify each |
+Read them in this order. The first one is the meeting, the other two are the engineering
+behind it.
+
+| File | Who it is for | What it covers |
+|---|---|---|
+| **[00-demo-brief.md](00-demo-brief.md)** | The account executive | The pitch, the demo beat by beat, what to ask for at the end, objection handling |
+| [01-approach.md](01-approach.md) | Their engineers | Architecture, latency budget, bandwidth and battery, cost model, rollout plan, open risks |
+| [02-accuracy-playbook.md](02-accuracy-playbook.md) | Their engineers | Eight accuracy levers ranked by return, with expected impact and how to verify each |
 
 ---
 
