@@ -81,6 +81,48 @@ TTS_VOICES = {"en": "Samantha", "es": "Paulina", "fr": "Thomas", "de": "Anna",
 
 
 # ---------------------------------------------------------------------------------------
+# Dashboard publisher
+# ---------------------------------------------------------------------------------------
+
+class DashboardPublisher:
+    """Publishes what the device is doing to the backend event bus.
+
+    Entirely optional and entirely fire-and-forget. The device's job is to translate; if the
+    dashboard is not running, or its socket drops mid-conversation, nothing here is allowed to
+    interrupt the conversation. Every failure path is swallowed on purpose.
+
+    The event schema is defined in ../backend/src/events.ts and shared by both sides.
+    """
+
+    def __init__(self, url: str | None):
+        self.url = url
+        self.ws = None
+        if not url:
+            return
+        try:
+            self.ws = websocket.create_connection(url, timeout=3)
+            print(f"[dashboard] publishing to {url}")
+        except Exception as e:
+            print(f"[dashboard] not connected ({e}). Continuing without it.")
+            self.ws = None
+
+    def send(self, event: dict) -> None:
+        if self.ws is None:
+            return
+        try:
+            self.ws.send(json.dumps(event))
+        except Exception:
+            self.ws = None   # stop trying; never retry inside the audio path
+
+    def close(self) -> None:
+        if self.ws is not None:
+            try:
+                self.ws.close()
+            except Exception:
+                pass
+
+
+# ---------------------------------------------------------------------------------------
 # Device context
 # ---------------------------------------------------------------------------------------
 
@@ -207,7 +249,8 @@ def speak(text: str, lang: str) -> float:
 # ---------------------------------------------------------------------------------------
 
 class TranslationDevice:
-    def __init__(self, pair: list[str], ctx: DeviceContext, keyterms: list[str] | None = None):
+    def __init__(self, pair: list[str], ctx: DeviceContext, keyterms: list[str] | None = None,
+                 dashboard: str | None = None):
         if len(pair) != 2:
             sys.exit("--pair needs exactly two language codes, for example: --pair en,es")
         self.pair = pair
@@ -219,10 +262,13 @@ class TranslationDevice:
         self.turns = 0
         self.timings: list[TurnTiming] = []
         self._speech_ended_at: float | None = None
+        self._started_at = time.monotonic()
+        self._audio_seconds = 0.0
+        self.dash = DashboardPublisher(dashboard)
 
     # -- connection ----------------------------------------------------------------------
 
-    def url(self) -> str:
+    def params(self) -> dict:
         p = {
             # Universal-3.5 Pro is the only model that code-switches natively mid-sentence
             # across 18 languages. That capability is what removes the language button.
@@ -254,7 +300,10 @@ class TranslationDevice:
         else:
             p["prompt"] = self.ctx.build_prompt()
 
-        return f"wss://{STT_HOST}/v3/ws?{urlencode(p)}"
+        return p
+
+    def url(self) -> str:
+        return f"wss://{STT_HOST}/v3/ws?{urlencode(self.params())}"
 
     def run_mic(self) -> None:
         try:
@@ -305,6 +354,7 @@ class TranslationDevice:
         print(f"Languages: {' <-> '.join(LANGUAGE_NAMES.get(c, c) for c in self.pair)}")
         print(f"Context:   {self.ctx.build_prompt()[:120]}...")
         print("-" * 76)
+        self.dash.send({"type": "status", "state": "connecting", "detail": f"Dialling {STT_HOST}"})
 
         self.ws = websocket.WebSocketApp(
             url,
@@ -346,8 +396,21 @@ class TranslationDevice:
             print(f"[session] {msg.get('id')}")
             # Verify the server applied what we asked for. Catching a defaulted model here
             # takes one line and saves a support ticket later.
-            if cfg := msg.get("configuration"):
+            cfg = msg.get("configuration")
+            if cfg:
                 print(f"[applied] {cfg}")
+            self._started_at = time.monotonic()
+            self.dash.send({
+                "type": "session",
+                "sessionId": msg.get("id", "unknown"),
+                "host": STT_HOST,
+                "pair": self.pair,
+                "params": {k: str(v) for k, v in self.params().items()},
+                "appliedConfig": cfg,
+                "startedAt": time.time() * 1000,
+                "simulated": False,
+            })
+            self.dash.send({"type": "status", "state": "live", "detail": "Streaming"})
 
         elif kind == "SpeechStarted":
             self._speech_ended_at = None
@@ -359,14 +422,23 @@ class TranslationDevice:
 
             if not msg.get("end_of_turn"):
                 print(f"\r  ...{transcript[-60:]}", end="", flush=True)
+                self.dash.send({"type": "partial", "text": transcript})
                 return
 
             self._speech_ended_at = self._speech_ended_at or time.monotonic()
             self._handle_final(msg, transcript)
 
         elif kind == "Termination":
-            print(f"\n[terminated] audio={msg.get('audio_duration_seconds')}s "
-                  f"session={msg.get('session_duration_seconds')}s")
+            audio = msg.get("audio_duration_seconds") or 0
+            session = msg.get("session_duration_seconds") or 0
+            print(f"\n[terminated] audio={audio}s session={session}s")
+            # The gap between these two numbers is the billing point: streaming is charged on
+            # how long the socket was open, not on how much audio went through it.
+            self.dash.send({
+                "type": "meter",
+                "sessionSeconds": float(session),
+                "audioSeconds": float(audio),
+            })
 
     def _handle_final(self, msg: dict, transcript: str) -> None:
         t = TurnTiming()
@@ -398,10 +470,35 @@ class TranslationDevice:
         print(f"  {t.render()}")
         print()
 
+        self.dash.send({
+            "type": "turn",
+            "turnOrder": msg.get("turn_order", self.turns - 1),
+            "language": source,
+            "languageConfidence": confidence if isinstance(confidence, (int, float)) else None,
+            "transcript": transcript,
+            "targetLanguage": target,
+            "translation": translated,
+            "timing": {"sttMs": t.stt_final_ms, "translateMs": t.translate_ms,
+                       "ttsMs": t.tts_ms},
+            "at": time.time() * 1000,
+        })
+        self.dash.send({
+            "type": "meter",
+            "sessionSeconds": time.monotonic() - self._started_at,
+            "audioSeconds": msg.get("audio_duration_seconds") or self._audio_seconds,
+        })
+
     def _on_close(self, ws, code, reason) -> None:
         self.stop.set()
         if code and code != 1000:
             print(f"\n[closed] code={code} reason={reason}")
+        self.dash.send({
+            "type": "status",
+            "state": "closed" if code in (1000, None) else "error",
+            "detail": f"Session closed ({code})" + (f": {reason}" if reason else ""),
+            "closeCode": code,
+        })
+        self.dash.close()
         if self.timings:
             avg = sum(x.total_ms for x in self.timings) / len(self.timings)
             worst = max(x.total_ms for x in self.timings)
@@ -419,6 +516,9 @@ def main() -> None:
     ap.add_argument("--names", default="", help="comma-separated names likely to be spoken")
     ap.add_argument("--keyterms", default="",
                     help="comma-separated vocabulary list; used instead of the context prompt")
+    ap.add_argument("--dashboard", nargs="?", const="ws://localhost:8787/v1/events",
+                    help="publish live events to the dashboard event bus "
+                         "(default ws://localhost:8787/v1/events)")
     args = ap.parse_args()
 
     if not API_KEY:
@@ -433,6 +533,7 @@ def main() -> None:
         pair=[c.strip() for c in args.pair.split(",")],
         ctx=ctx,
         keyterms=[k.strip() for k in args.keyterms.split(",") if k.strip()],
+        dashboard=args.dashboard,
     )
 
     try:

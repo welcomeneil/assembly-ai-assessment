@@ -6,21 +6,35 @@
  * AssemblyAI API key on the device is a key on every device, and revoking it bricks the fleet.
  *
  * This service sits between the fleet and AssemblyAI. It holds the only copy of the API key
- * and exposes three endpoints:
+ * and exposes:
  *
- *   POST /v1/session    mint a single-use streaming token, plus the connection parameters
- *   POST /v1/translate  proxy a finished turn through the LLM Gateway
- *   GET  /v1/health     liveness
+ *   POST /v1/session      mint a single-use streaming token, plus the connection parameters
+ *   POST /v1/translate    proxy a finished turn through the LLM Gateway
+ *   GET  /v1/health       liveness
+ *   WS   /v1/events       event bus: the device publishes, the dashboard subscribes
+ *   POST /v1/demo/replay  push a scripted conversation onto the bus, for demos without a key
+ *   GET  /                the dashboard
  *
  * The device connects straight to AssemblyAI over WebSocket using the token it is given.
  * Audio never passes through this service, so it stays small and cheap regardless of fleet
- * size. Only session setup and translation touch it.
+ * size. Only session setup, translation and the event stream touch it.
  */
 
+import { createServer } from "node:http";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
+
 import express, { type Request, type Response } from "express";
+import { WebSocketServer } from "ws";
+
+import { EventBus, type BusEvent } from "./events.js";
+import { startReplay, type ReplayHandle } from "./replay.js";
 
 const API_KEY = process.env.ASSEMBLYAI_API_KEY;
 const PORT = Number(process.env.PORT ?? 8787);
+
+// dist/server.js -> ../../dashboard
+const DASHBOARD_DIR = join(dirname(fileURLToPath(import.meta.url)), "..", "..", "dashboard");
 
 // Pin a region per deployment. The default host edge-routes for latency and provides no data
 // residency guarantee, which will not survive an EU launch review.
@@ -48,6 +62,12 @@ const LANGUAGE_NAMES: Record<string, string> = {
 
 const app = express();
 app.use(express.json({ limit: "64kb" }));
+
+// The dashboard is a single static page with no build step. That is deliberate: a demo shown
+// to a customer should not depend on a bundler starting correctly.
+app.use(express.static(DASHBOARD_DIR));
+
+const bus = new EventBus();
 
 // ---------------------------------------------------------------------------------------
 // Context prompt
@@ -93,6 +113,8 @@ function buildPrompt(ctx: DeviceContext, pair: string[]): string {
 // ---------------------------------------------------------------------------------------
 
 app.post("/v1/session", async (req: Request, res: Response) => {
+  if (!API_KEY) return res.status(503).json({ error: "ASSEMBLYAI_API_KEY is not set" });
+
   const deviceId = req.header("x-device-id");
   if (!deviceId) return res.status(401).json({ error: "missing x-device-id" });
 
@@ -174,6 +196,8 @@ app.post("/v1/session", async (req: Request, res: Response) => {
 // ---------------------------------------------------------------------------------------
 
 app.post("/v1/translate", async (req: Request, res: Response) => {
+  if (!API_KEY) return res.status(503).json({ error: "ASSEMBLYAI_API_KEY is not set" });
+
   const deviceId = req.header("x-device-id");
   if (!deviceId) return res.status(401).json({ error: "missing x-device-id" });
 
@@ -232,16 +256,79 @@ app.post("/v1/translate", async (req: Request, res: Response) => {
 });
 
 // ---------------------------------------------------------------------------------------
+// POST /v1/demo/replay
+// ---------------------------------------------------------------------------------------
 
-app.get("/v1/health", (_req, res) => res.json({ ok: true }));
+let replay: ReplayHandle | null = null;
+
+/**
+ * Push a scripted conversation onto the event bus.
+ *
+ * This is what makes the dashboard demonstrable with no API key, no microphone and no
+ * network. The events it produces are flagged `simulated`, and the dashboard shows a banner
+ * saying so. It is a presentation aid, not evidence.
+ */
+app.post("/v1/demo/replay", (_req: Request, res: Response) => {
+  replay?.stop();
+  replay = startReplay(bus, STREAMING_HOST);
+  res.json({ started: true, simulated: true });
+});
+
+app.post("/v1/demo/stop", (_req: Request, res: Response) => {
+  replay?.stop();
+  replay = null;
+  bus.reset();
+  res.json({ stopped: true });
+});
+
+app.get("/v1/health", (_req, res) =>
+  res.json({
+    ok: true,
+    apiKeyConfigured: Boolean(API_KEY),
+    streamingHost: STREAMING_HOST,
+    translationModel: TRANSLATION_MODEL,
+    dashboardSubscribers: bus.subscriberCount,
+  }),
+);
+
+// ---------------------------------------------------------------------------------------
+// WS /v1/events
+// ---------------------------------------------------------------------------------------
+
+const server = createServer(app);
+const wss = new WebSocketServer({ server, path: "/v1/events" });
+
+wss.on("connection", (socket) => {
+  bus.add(socket);
+
+  socket.on("message", (raw) => {
+    // Anything a client sends is a published event. In production this endpoint needs the
+    // same per-device authentication as /v1/session; it is open here so the demo is one
+    // command to run.
+    let event: BusEvent;
+    try {
+      event = JSON.parse(raw.toString()) as BusEvent;
+    } catch {
+      return;
+    }
+    if (event && typeof event.type === "string") bus.publish(event, socket);
+  });
+
+  socket.on("close", () => bus.remove(socket));
+  socket.on("error", () => bus.remove(socket));
+});
 
 if (!API_KEY) {
-  console.error("ASSEMBLYAI_API_KEY is not set.");
-  process.exit(1);
+  // Not fatal. The dashboard and its scripted replay run without a key, which is how the
+  // demo gets shown when there is no key to hand. Live endpoints return 503 until one is set.
+  console.warn("ASSEMBLYAI_API_KEY is not set. Dashboard replay works; live sessions do not.");
 }
 
-app.listen(PORT, () => {
+server.listen(PORT, () => {
   console.log(`iTranslate backend listening on :${PORT}`);
-  console.log(`  streaming host: ${STREAMING_HOST}`);
-  console.log(`  translation model: ${TRANSLATION_MODEL}`);
+  console.log(`  dashboard          http://localhost:${PORT}`);
+  console.log(`  event bus          ws://localhost:${PORT}/v1/events`);
+  console.log(`  streaming host     ${STREAMING_HOST}`);
+  console.log(`  translation model  ${TRANSLATION_MODEL}`);
+  console.log(`  api key            ${API_KEY ? "configured" : "NOT SET (replay only)"}`);
 });

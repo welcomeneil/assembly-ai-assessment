@@ -57,8 +57,11 @@ because it also means the entire pipeline can be tuned server-side without a fir
        |  3. POST /v1/translate -------->  proxy to LLM Gateway  --->  Gemini / Claude / GPT
        |  <----- translated text --------  <-----------------------
        |
-       v
-   TTS + speaker                        (iTranslate's existing TTS)
+       |  4. events over WebSocket ----->  fan out to dashboards
+       v                                            |
+   TTS + speaker                                    v
+   (iTranslate's existing TTS)               browser dashboard
+                                             (read-only observer)
 ```
 
 **Audio goes directly from device to AssemblyAI.** It does not pass through iTranslate's
@@ -86,6 +89,14 @@ setting for the whole pipeline, and they can change translation model without ch
 **TTS stays theirs.** AssemblyAI does not do text to speech. iTranslate already has a TTS model
 in the product, and the demo uses the macOS `say` command as a stand-in so it makes sound. That
 is the seam where their engine drops in.
+
+**The dashboard observes, it does not participate.** It subscribes to a small event stream the
+device publishes and renders it. It holds no credentials and never contacts AssemblyAI. Two
+reasons it exists. For this demo, a handheld conversation is invisible to everyone who is not
+holding the device, and a customer needs to see the language detection happening rather than
+be told about it. For iTranslate in production, the same event stream is what a support
+engineer needs when a device in the field is misbehaving: which model was applied, what
+confidence each turn came back with, and where the latency went.
 
 ---
 

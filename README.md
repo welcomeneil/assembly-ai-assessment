@@ -28,11 +28,18 @@ ago, so it can build that description automatically on every session.
 
 | Deliverable | File |
 |---|---|
+| **Dashboard**, the screen you put in front of the customer | [index.html](part-1-itranslate/demo/dashboard/index.html) |
 | Approach: architecture, latency, bandwidth, cost, rollout | [01-approach.md](part-1-itranslate/01-approach.md) |
 | Accuracy playbook: 8 levers ranked by return | [02-accuracy-playbook.md](part-1-itranslate/02-accuracy-playbook.md) |
+| Token broker, translation proxy and event bus (TypeScript) | [server.ts](part-1-itranslate/demo/backend/src/server.ts) |
 | Device simulator (Python) | [translator.py](part-1-itranslate/demo/device/translator.py) |
-| Token broker and translation proxy (TypeScript) | [server.ts](part-1-itranslate/demo/backend/src/server.ts) |
 | Accuracy benchmark harness (Python) | [accuracy_bench.py](part-1-itranslate/demo/bench/accuracy_bench.py) |
+
+**The dashboard runs with no API key.** `npm install && npm run build && npm start`, open
+http://localhost:8787, press Play. It plays a scripted bilingual conversation and shows the
+language being detected per turn, where the latency goes, the exact parameters the device sent,
+and a live billing meter. A banner says the data is scripted. With a key, the same dashboard
+shows a real session.
 
 Two things they didn't ask about: streaming bills on **connection time, not audio sent**, which
 at fleet scale is a 6x cost difference depending on session policy. And Opus encoding cuts
@@ -84,20 +91,26 @@ report had no detail. They weren't being unhelpful, they genuinely couldn't see 
 
 ### Part 1
 
+**The dashboard, no API key needed.** This is the one to run first.
+
+```bash
+cd part-1-itranslate/demo/backend
+npm install
+npm run build && npm start
+# open http://localhost:8787 and press "Play sample conversation"
+```
+
+**Live, with a key.** Start the backend as above with `ASSEMBLYAI_API_KEY` set, then in a
+second terminal point the device simulator at it. The dashboard updates as it runs.
+
 ```bash
 cd part-1-itranslate/demo/device
 pip install -r requirements.txt
 export ASSEMBLYAI_API_KEY=your_key
 
 # no microphone needed, reuses the bilingual sample from Part 2
-python3 translator.py --pair en,es \
-  --file ./././part-2-spanglish/code/python/sample_bilingual.wav
-```
-
-```bash
-# TypeScript backend
-cd part-1-itranslate/demo/backend
-npm install && npx tsc --noEmit    # typechecks clean, no key needed
+python3 translator.py --pair en,es --dashboard \
+  --file ../../../part-2-spanglish/code/python/sample_bilingual.wav
 ```
 
 ### Part 2
