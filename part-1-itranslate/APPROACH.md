@@ -40,11 +40,6 @@ dumped; a key on one device is a key on every device, and revoking it bricks the
 Their server mints a single-use token valid for 60 seconds
 (`GET /v3/token`, `expires_in_seconds` 1–600).
 
-**Connection parameters come from their server, not firmware.** Consumer firmware takes
-months to roll across a fleet, so anything compiled in is frozen for months. Served,
-the model, noise setting and turn thresholds change for everyone at once — or for 1%
-first. This is the difference between tuning accuracy in a week and in a release cycle.
-
 **Scope stops at the transcript.** They asked about recognition accuracy and already own
 translation and TTS. AssemblyAI *can* carry translation on the same socket via
 `llm_gateway`, and there's a real latency argument for it, but that's a different
@@ -69,33 +64,12 @@ live API on 56 seconds of real bilingual conversation, three runs per config.
 **Three of my six predictions were wrong, including the one I ranked first.** Full
 numbers in [MEASUREMENTS.md](demo/fixtures/MEASUREMENTS.md).
 
-The generalisable point is not "prompting is bad" — it's one 56-second clip and the
-prompt was in English over mostly-Spanish audio, which may be the whole story. It's that
-**a vendor benchmark is a reason to test a lever, not a reason to ship it.** The value
-we bring iTranslate is the harness that tells them which levers pay on *their* audio,
-and that harness is `demo/src/score.ts`.
-
-My reasoning about `voice_focus` is a cleaner version of the same mistake: I inferred it
-from how the device is *held*, and tested it on a 2008 home recording. Both may well be
-right on real device audio. That is exactly what their 30 minutes of recordings is for.
-
-**Not accuracy, but raise it anyway:** Opus encoding cuts bandwidth roughly tenfold,
-which on a metered cellular handheld is the difference between a device people use
-freely and one they ration. Ship it separately with its own integration test —
-declaring a compressed encoding while sending raw PCM produces a session that connects,
-reports healthy and silently returns nothing.
-
 ---
 
-## 4. Cost, which they didn't ask about
+## 4. Cost
 
 Streaming bills on **how long the connection is open, not how much audio goes through
 it.** A translation device is bursty: a 40-second exchange, then ten minutes of walking.
-
-The demo makes this visible — **70.7s billed against 56.0s of audio**, so 21% of the
-session was paid for silence. At 100,000 devices and 6 sessions a day, a tail like that
-is roughly **$1,000 a day**. The hang-up policy deserves more engineering attention than
-the model choice.
 
 `universal-3-5-pro` is $0.45/hr; `universal-streaming-english` and `-multilingual` are
 $0.15/hr. If a fleet-wide cost ceiling bites, the honest move is to route the long tail
@@ -120,12 +94,6 @@ that matter.
 
 ## 6. Open questions and limits
 
-- **How many languages, really?** The live API accepts **21** codes plus `multi`;
-  AssemblyAI's multilingual-streaming post says six. I verified what the parameter
-  validator accepts, not per-language quality, so I would not promise any of the 21
-  before testing. For the long tail beyond that, `whisper-rt` covers 99 — the shape of
-  the answer is Universal for the high-volume pairs and Whisper as a fallback tier,
-  chosen per session from the served config.
 - **Detection can return a language you did not declare.** Two turns came back tagged
   French with `language_codes=["en","es"]` set, at 0.27 and 0.49 confidence. A device
   should treat sub-0.7 as "don't switch the output voice" rather than trusting the label.
@@ -133,14 +101,9 @@ that matter.
   continuous overlapping speech and produced a single turn for 45 seconds — no turn
   boundaries, so no per-turn language labels. Worth knowing before promising per-turn
   behaviour on audio nobody has heard yet.
-- **`prompt` is capped at 1750 characters**, so the device needs a policy for which names
-  make the cut once an itinerary gets long — if prompting turns out to help on their
-  audio at all.
 - **Which pairs actually get used fleet-wide**, and where people use the device. A
   station is a different noise problem from a hotel lobby, and `voice_focus_threshold`
   is tunable per environment.
-- **EU sales?** There are region-pinned endpoints (`streaming.eu.`), and that
-  conversation is easier now than during their launch review.
 
 ---
 
