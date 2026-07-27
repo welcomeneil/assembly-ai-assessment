@@ -58,18 +58,10 @@ export interface TerminationMessage {
   session_duration_seconds: number;
 }
 
-export interface LlmGatewayMessage {
-  type: "LlmGatewayResponse";
-  turn_order: number;
-  transcript?: string;
-  data: { choices?: Array<{ message?: { content?: string } }> };
-}
-
 export type ServerMessage =
   | BeginMessage
   | TurnMessage
   | TerminationMessage
-  | LlmGatewayMessage
   | { type: string; [key: string]: unknown };
 
 /**
@@ -108,7 +100,6 @@ export interface StreamHandlers {
   onBegin?: (message: BeginMessage) => void;
   onPartial?: (message: TurnMessage) => void;
   onTurn?: (message: TurnMessage) => void;
-  onTranslation?: (message: LlmGatewayMessage) => void;
   onTermination?: (message: TerminationMessage) => void;
   onError?: (error: Error) => void;
 }
@@ -139,12 +130,6 @@ export class StreamingSession {
           else handlers.onPartial?.(turn);
           break;
         }
-        // The API reference and the LLM Gateway guide disagree on the casing of this
-        // message type, so accept both rather than silently dropping translations.
-        case "LlmGatewayResponse":
-        case "LLMGatewayResponse":
-          handlers.onTranslation?.(message as LlmGatewayMessage);
-          break;
         case "Termination":
           handlers.onTermination?.(message as TerminationMessage);
           break;
@@ -215,9 +200,4 @@ export class StreamingSession {
     this.closed = true;
     this.socket.close();
   }
-}
-
-/** Extract the translated text from an LLM Gateway reply. */
-export function translationText(message: LlmGatewayMessage): string {
-  return message.data?.choices?.[0]?.message?.content?.trim() ?? "";
 }

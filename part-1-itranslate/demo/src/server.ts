@@ -5,7 +5,7 @@
  * demo can run on one laptop.
  */
 
-import { existsSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { createServer } from "node:http";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -21,11 +21,30 @@ import type { DashboardEvent } from "./types.js";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const root = join(here, "..");
+
+/**
+ * Read demo/.env if it exists, so the key can live in a gitignored file rather than in
+ * shell history. An already-exported variable wins, and no dependency is needed for
+ * something this small.
+ */
+function loadDotEnv(path: string): void {
+  if (!existsSync(path)) return;
+  for (const line of readFileSync(path, "utf8").split("\n")) {
+    const match = /^\s*([A-Z_][A-Z0-9_]*)\s*=\s*(.*)\s*$/i.exec(line);
+    if (!match || line.trimStart().startsWith("#")) continue;
+    const [, key, rawValue] = match;
+    if (process.env[key!] === undefined) {
+      process.env[key!] = rawValue!.replace(/^["']|["']$/g, "");
+    }
+  }
+}
+loadDotEnv(join(root, ".env"));
+
 const PORT = Number(process.env["PORT"] ?? 8787);
 const API_KEY = process.env["ASSEMBLYAI_API_KEY"];
 
-const FIXTURE = join(root, "fixtures", "herring1-excerpt.json");
-const SAMPLE_AUDIO = join(root, "audio", "herring1.wav");
+const FIXTURE = join(root, "fixtures", "session.json");
+const SAMPLE_AUDIO = join(root, "audio", "paris.wav");
 const SAMPLE_REFERENCE = join(root, "fixtures", "reference.txt");
 
 const app = express();
@@ -201,7 +220,7 @@ server.listen(PORT, () => {
       : "  no ASSEMBLYAI_API_KEY -- replay only, which is enough to run the demo\n",
   );
   if (!existsSync(SAMPLE_AUDIO)) {
-    process.stdout.write("  audio/herring1.wav not present -- run audio/fetch_sample.sh for live mode\n");
+    process.stdout.write("  audio/paris.wav not present -- run audio/fetch_sample.sh for live sessions\n");
   }
   process.stdout.write("\n");
 });

@@ -1,5 +1,5 @@
 /**
- * A live session: WAV in, transcript and translation out, everything timed.
+ * A live session: WAV in, scored transcript out, everything timed.
  *
  * This is the lab harness, not the production path. In production the device holds the
  * socket itself (see device/device_sim.py) so audio never touches iTranslate's servers.
@@ -9,10 +9,10 @@
 
 import { readFile } from "node:fs/promises";
 
-import { StreamingSession, translationText } from "./aai.js";
+import { StreamingSession } from "./aai.js";
 import { chunk, decodeWav, pace } from "./audio.js";
 import { buildKeyterms, buildParams, buildPrompt, type DeviceContext } from "./config.js";
-import { keytermsHit, scorePrefix } from "./score.js";
+import { keytermsHit, score, scorePrefix } from "./score.js";
 import type { DashboardEvent } from "./types.js";
 
 export interface LiveOptions {
@@ -21,6 +21,8 @@ export interface LiveOptions {
   context: DeviceContext;
   /** Gold transcript to score against. Omitted for microphone input. */
   referencePath?: string;
+  /** Send the situational `prompt`. Off by default -- see config.ts for why. */
+  withPrompt?: boolean;
   signal?: AbortSignal;
 }
 
@@ -35,21 +37,31 @@ export async function runLiveSession(
     ? (await readFile(options.referencePath, "utf8")).split("\n").join(" ").trim()
     : undefined;
 
-  const prompt = buildPrompt(options.context);
   const keyterms = buildKeyterms(options.context);
+  // `prompt` is off by default because it measured worse on this audio; `withPrompt`
+  // is here so the comparison can be re-run on the customer's own recordings.
+  const prompt = buildPrompt(options.context);
   const params = {
     ...buildParams(options.context),
-    prompt,
-    keyterms_prompt: JSON.stringify(keyterms),
+    ...(options.withPrompt === true ? { prompt } : {}),
   };
 
   const started = Date.now();
   const at = (): number => Date.now() - started;
 
+  // Resolved when the server's Termination message arrives. Waiting on the event rather
+  // than on a fixed sleep matters: Termination carries the billed session duration, and
+  // dropping it loses both the closing numbers and the end-of-session diff.
+  let terminated: () => void = () => {};
+  const termination = new Promise<void>((resolve) => { terminated = resolve; });
+
   // Timestamps are kept per turn so latency is measured, not estimated: sttMs is the
   // gap between the audio for a turn ending and its final transcript arriving.
   const turnFinalisedAt = new Map<number, number>();
   const transcripts: string[] = [];
+  // Hypothesis tokens contributed by turns already reported. Ops are in hypothesis
+  // order, so this is what lets a turn's own ops be sliced out of the global alignment.
+  let hypTokensReported = 0;
   let audioSentMs = 0;
 
   const session = await StreamingSession.connect(options.apiKey, params, {
@@ -59,7 +71,11 @@ export async function runLiveSession(
         at: at(),
         mode: "live",
         audio: options.audioPath.split("/").pop() ?? options.audioPath,
-        config: { params, prompt, keyterms },
+        config: {
+          params,
+          prompt: options.withPrompt === true ? prompt : "",
+          keyterms,
+        },
       });
     },
 
@@ -101,39 +117,40 @@ export async function runLiveSession(
 
       if (reference !== undefined) {
         transcripts.push(turn.transcript);
-        const soFar = transcripts.join(" ");
-        const result = scorePrefix(reference, soFar);
+        const result = scorePrefix(reference, transcripts.join(" "));
         emit({
           type: "turn.accuracy",
           at: now,
           order: turn.turn_order,
-          reference,
-          wer: result.wer,
           keytermsHit: keytermsHit(keyterms, turn.transcript),
-          ops: result.ops,
+          session: {
+            wer: result.wer,
+            errors: result.substitutions + result.deletions + result.insertions,
+            words: result.referenceWords,
+          },
         });
       }
     },
 
-    onTranslation: (message) => {
-      const finalisedAt = turnFinalisedAt.get(message.turn_order);
-      emit({
-        type: "turn.translation",
-        at: at(),
-        order: message.turn_order,
-        target: "",  // the gateway prompt picks the direction; the model reports the text
-        text: translationText(message),
-        translateMs: finalisedAt === undefined ? 0 : at() - finalisedAt,
-      });
-    },
-
     onTermination: (message) => {
+      // One diff, over the whole session, aligned once.
+      if (reference !== undefined && transcripts.length > 0) {
+        const result = score(reference, transcripts.join(" "));
+        emit({
+          type: "session.accuracy",
+          at: at(),
+          reference,
+          wer: result.wer,
+          ops: result.ops,
+        });
+      }
       emit({
         type: "session.close",
         at: at(),
         audioDurationSeconds: message.audio_duration_seconds,
         sessionDurationSeconds: message.session_duration_seconds,
       });
+      terminated();
     },
 
     onError: (error) => {
@@ -155,7 +172,11 @@ export async function runLiveSession(
     // on connection time, so a session left open after the talking stops is paid for.
     await new Promise((resolve) => setTimeout(resolve, 2000));
     session.terminate();
-    await new Promise((resolve) => setTimeout(resolve, 500));
+    // Wait for the server to confirm, but never hang the demo on it.
+    await Promise.race([
+      termination,
+      new Promise((resolve) => setTimeout(resolve, 8000)),
+    ]);
   } finally {
     clearInterval(meter);
     session.close();

@@ -34,12 +34,10 @@
   --lang-en:        #2a78d6;
   --lang-es:        #eb6834;
 
-  /* Latency stages. One quantity split in a fixed order, so this is an ordinal
-     ramp in a single hue rather than three categorical hues -- and it stays clear
-     of the language colours so a green segment can never be read as a language. */
-  --stage-stt:      #0d6b4a;
-  --stage-translate:#1a9c6e;
-  --stage-tts:      #3fbd8f;
+  /* Recognition latency. One series, so one hue -- and deliberately not one of the
+     language colours, so a bar can never be misread as a language. */
+  --latency:        #1a9c6e;
+  --latency-soft:   #3fbd8f;
 
   --good:           #0ca30c;
   --warning:        #fab219;
@@ -63,9 +61,8 @@
     --hairline:       rgba(255, 255, 255, 0.10);
     --lang-en:        #3987e5;
     --lang-es:        #d95926;
-    --stage-stt:      #12805a;
-    --stage-translate:#22ad7c;
-    --stage-tts:      #4fc79b;
+    --latency:        #22ad7c;
+    --latency-soft:   #12805a;
   }
 }
 :root[data-theme="dark"] {
@@ -80,9 +77,8 @@
   --hairline:       rgba(255, 255, 255, 0.10);
   --lang-en:        #3987e5;
   --lang-es:        #d95926;
-  --stage-stt:      #12805a;
-  --stage-translate:#22ad7c;
-  --stage-tts:      #4fc79b;
+  --latency:        #22ad7c;
+  --latency-soft:   #12805a;
 }
 
 * { box-sizing: border-box; }
@@ -205,15 +201,9 @@ button.primary { background: var(--ink); color: var(--surface); border-color: va
 .w-del { color: var(--critical); text-decoration: line-through; text-decoration-thickness: 2px; }
 .w-key { font-weight: 620; box-shadow: 0 2px 0 color-mix(in srgb, var(--good) 60%, transparent); }
 
-.trans { display: flex; gap: 8px; margin-top: 7px; font-size: 14.5px; color: var(--ink-2); }
-.trans .arrow { color: var(--ink-muted); flex: none; }
-
 .turn-foot { display: flex; align-items: center; gap: 10px; margin-top: 8px; }
-.microbar { display: flex; height: 7px; border-radius: 4px; overflow: hidden; flex: 1; max-width: 260px; background: var(--grid); gap: 2px; }
-.microbar span { display: block; height: 100%; }
-.microbar .s1 { background: var(--stage-stt); }
-.microbar .s2 { background: var(--stage-translate); }
-.microbar .s3 { background: var(--stage-tts); }
+.microbar { height: 7px; border-radius: 4px; flex: 1; max-width: 200px; background: var(--grid); overflow: hidden; }
+.microbar span { display: block; height: 100%; background: var(--latency); border-radius: 4px; }
 .turn-foot .total { font: 500 12px var(--mono); color: var(--ink-2); font-variant-numeric: tabular-nums; }
 .turn-foot .wer { font: 500 12px var(--mono); color: var(--ink-muted); font-variant-numeric: tabular-nums; }
 
@@ -237,6 +227,7 @@ button.primary { background: var(--ink); color: var(--surface); border-color: va
   border: 1px solid var(--grid); color: var(--ink-2);
 }
 .term.hit { border-color: color-mix(in srgb, var(--good) 55%, transparent); color: var(--ink); font-weight: 600; }
+.chart-note { font-size: 12px; color: var(--ink-muted); margin: -4px 0 12px; line-height: 1.5; }
 .section-label { font-size: 11.5px; font-weight: 640; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-muted); margin: 16px 0 0; }
 
 /* ---------- charts ---------- */
@@ -335,9 +326,7 @@ footer a { color: inherit; }
     <div class="legend">
       <span><i style="background: var(--lang-en)"></i> English detected</span>
       <span><i style="background: var(--lang-es)"></i> Spanish detected</span>
-      <span><i style="background: var(--serious)"></i> substituted</span>
-      <span><i style="background: var(--critical)"></i> missed</span>
-      <span><i style="background: var(--warning)"></i> inserted</span>
+      <span><i style="background: var(--good)"></i> keyterm recognised</span>
     </div>
     <div id="stream"></div>
   </section>
@@ -354,20 +343,30 @@ footer a { color: inherit; }
   </section>
 </div>
 
+<section class="panel" id="diff-panel" hidden style="margin-bottom:12px">
+  <h2>Against the human transcript</h2>
+  <p class="chart-note">The whole session, aligned once against the corpus transcript.
+    Word error rate is only meaningful over a complete alignment &mdash; scoring turn by
+    turn would charge every endpointer cut as an error.</p>
+  <div class="legend">
+    <span><i style="background: var(--serious)"></i> substituted</span>
+    <span><i style="background: var(--critical)"></i> missed</span>
+    <span><i style="background: var(--warning)"></i> inserted</span>
+  </div>
+  <div class="hyp" id="diff-body"></div>
+</section>
+
 <div class="lower">
   <section class="panel">
-    <h2>Where the time goes</h2>
-    <div class="legend">
-      <span><i style="background: var(--stage-stt)"></i> Recognise</span>
-      <span><i style="background: var(--stage-translate)"></i> Translate</span>
-      <span><i style="background: var(--stage-tts)"></i> Speak</span>
-    </div>
-    <svg id="latency" height="180" role="img" aria-label="Per-turn latency, split into recognition, translation and speech"></svg>
+    <h2>Time to final transcript</h2>
+    <p class="chart-note">From the moment the speaker stops to the finalised turn arriving,
+      per turn. A single series, so no legend &mdash; the heading names it.</p>
+    <svg id="latency" height="180" role="img" aria-label="Time from end of speech to final transcript, per turn"></svg>
     <details>
       <summary>Table view</summary>
       <div class="table-scroll">
         <table id="latency-table">
-          <thead><tr><th>Turn</th><th>Lang</th><th>Recognise</th><th>Translate</th><th>Speak</th><th>Total</th><th>Transcript</th></tr></thead>
+          <thead><tr><th>Turn</th><th>Lang</th><th>Conf.</th><th>Time to final</th><th>WER</th><th>Transcript</th></tr></thead>
           <tbody></tbody>
         </table>
       </div>
@@ -415,6 +414,8 @@ footer a { color: inherit; }
 
 const turns = new Map();      // order -> turn record
 let session = null;           // the session.open event
+let session_total = null;     // running { wer, errors, words } -- the authoritative number
+let sessionDiff = null;       // the one word-level diff, once the session ends
 let startedAt = 0;
 let clockTimer = null;
 
@@ -433,7 +434,8 @@ function connect() {
 function turnFor(order) {
   let turn = turns.get(order);
   if (!turn) {
-    turn = { order, partial: "", final: null, accuracy: null, translation: null, ttsMs: null };
+    turn = { order, partial: "", final: null, accuracy: null };
+
     turns.set(order, turn);
   }
   return turn;
@@ -443,6 +445,8 @@ function handle(event) {
   switch (event.type) {
     case "session.open":
       turns.clear();
+      session_total = null;
+      sessionDiff = null;
       session = event;
       startedAt = Date.now();
       renderSession(event);
@@ -463,16 +467,12 @@ function handle(event) {
 
     case "turn.accuracy":
       turnFor(event.order).accuracy = event;
+      session_total = event.session;
       renderAll();
       break;
 
-    case "turn.translation":
-      turnFor(event.order).translation = event;
-      renderAll();
-      break;
-
-    case "turn.speech":
-      turnFor(event.order).ttsMs = event.ttsMs;
+    case "session.accuracy":
+      sessionDiff = event;
       renderAll();
       break;
 
@@ -512,17 +512,18 @@ function renderAll() {
   renderStats();
   renderLatency();
   renderKeyterms();
+  renderSessionDiff();
 }
 
 function renderSession(event) {
   const params = event.config.params;
   const badge = $("mode-badge");
   badge.className = `badge ${event.mode}`;
-  $("mode-text").textContent = event.mode === "live" ? "live" : "simulated";
+  $("mode-text").textContent = event.mode === "live" ? "live" : "recorded";
 
   $("config-line").textContent =
     `${params.speech_model} · ${params.language_codes} · detection on · ` +
-    `${params.voice_focus} · ${params.mode} · ${event.config.keyterms.length} keyterms · ${event.audio}`;
+    `${event.config.keyterms.length} keyterms · ${event.audio}`;
 
   // Every parameter, verbatim. Nothing about the configuration is hidden from the
   // customer's engineers, who are the ones who actually decide.
@@ -530,15 +531,13 @@ function renderSession(event) {
     ["speech_model", params.speech_model],
     ["language_codes", params.language_codes],
     ["language_detection", params.language_detection],
-    ["voice_focus", params.voice_focus],
-    ["mode", params.mode],
-    ["min_turn_silence", params.min_turn_silence + " ms"],
     ["encoding", params.encoding],
     ["sample_rate", params.sample_rate + " Hz"],
-    ["llm_gateway", params.llm_gateway ? "translation in-session" : "off"],
+    ["keyterms_prompt", `${event.config.keyterms.length} terms`],
+    ["prompt", event.config.prompt ? "sent" : "not sent — measured worse"],
   ];
   $("params").innerHTML = shown.map(([key, value]) => {
-    const on = value === "true" || value === "translation in-session";
+    const on = value === "true" || String(value).endsWith("terms");
     return `<div><span class="k">${key}</span><span class="v${on ? " on" : ""}">${escapeHtml(String(value))}</span></div>`;
   }).join("");
 
@@ -550,13 +549,16 @@ function renderSession(event) {
     banner.classList.add("live");
     banner.innerHTML = "<strong>Live session.</strong> Real audio, real API, measured numbers.";
   } else {
-    banner.classList.remove("live");
+    // Not a simulation. This is a recording of a real session, replayed at the timings
+    // it was captured at, so the numbers on screen are measurements either way.
+    banner.classList.add("live");
     const p = event.provenance || {};
+    const when = p.recordedAt ? new Date(p.recordedAt).toISOString().slice(0, 16).replace("T", " ") : "";
     banner.innerHTML =
-      "<strong>Simulated session.</strong> The audio, its timings, the reference transcript and the " +
-      "per-turn language labels are real, from the " + escapeHtml(String(p.corpus || "corpus")) + ". " +
-      "The recogniser output and the latency figures are constructed, not measured. " +
-      "Set <code>ASSEMBLYAI_API_KEY</code> and press Play for a real session.";
+      "<strong>Recorded session, replayed.</strong> Every transcript, confidence, language label " +
+      "and timing below came off the wire from AssemblyAI" + (when ? " on " + escapeHtml(when) + " UTC" : "") +
+      ". No API key is needed to watch it. Set <code>ASSEMBLYAI_API_KEY</code> and press Play to run " +
+      "a new one against the live API.";
   }
 }
 
@@ -580,40 +582,24 @@ function renderStream() {
     const conf = final.languageConfidence
       ? `<span class="conf">${final.languageConfidence.toFixed(2)}</span>` : "";
     const flag = final.midTurnSwitch
-      ? `<span class="flag">switched mid-sentence</span>` : "";
+      ? `<span class="flag">low language confidence</span>` : "";
 
     const hits = turn.accuracy ? turn.accuracy.keytermsHit : [];
-    const body = turn.accuracy
-      ? renderDiff(turn.accuracy.ops, hits)
-      : markKeyterms(escapeHtml(final.transcript), hits);
+    const body = markKeyterms(escapeHtml(final.transcript), hits);
+    const ref = "";
 
-    // The reference is only worth showing when it differs -- otherwise it is just the
-    // same sentence twice.
-    const showRef = turn.accuracy &&
-      turn.accuracy.ops.some((op) => op.kind !== "ok") &&
-      turn.accuracy.reference;
-    const ref = showRef
-      ? `<div class="ref"><b>Spoken:</b> ${escapeHtml(turn.accuracy.reference)}</div>` : "";
-
-    const translation = turn.translation
-      ? `<div class="trans"><span class="arrow">&rarr;</span><span>${escapeHtml(turn.translation.text)}</span></div>`
-      : "";
-
+    // The bar is scaled against the slowest turn in the session, so it reads as
+    // "this turn versus the rest" rather than as an absolute the viewer must calibrate.
     const stt = final.sttMs || 0;
-    const tr = turn.translation ? turn.translation.translateMs : 0;
-    const tts = turn.ttsMs || 0;
-    const total = stt + tr + tts;
-    const bar = total > 0 ? `
-      <div class="microbar" title="recognise ${stt} ms · translate ${tr} ms · speak ${tts} ms">
-        <span class="s1" style="width:${(stt / total) * 100}%"></span>
-        <span class="s2" style="width:${(tr / total) * 100}%"></span>
-        <span class="s3" style="width:${(tts / total) * 100}%"></span>
+    const slowest = Math.max(...orderedTurns().filter((t) => t.final).map((t) => t.final.sttMs || 0), 1);
+    const bar = stt > 0 ? `
+      <div class="microbar" title="${stt} ms from end of speech to final transcript">
+        <span style="width:${Math.max((stt / slowest) * 100, 3)}%"></span>
       </div>
-      <span class="total">${total} ms</span>` : "";
+      <span class="total">${stt} ms</span>` : "";
 
-    const wer = turn.accuracy && turn.accuracy.wer !== null
-      ? `<span class="wer">WER ${(turn.accuracy.wer * 100).toFixed(0)}%</span>`
-      : (turn.accuracy ? `<span class="wer">not scored</span>` : "");
+    const wer = hits.length > 0
+      ? `<span class="wer">${hits.length} keyterm${hits.length > 1 ? "s" : ""}</span>` : "";
 
     return `<div class="turn">
       <div class="turn-head">
@@ -623,7 +609,6 @@ function renderStream() {
       </div>
       <div class="hyp">${body}</div>
       ${ref}
-      ${translation}
       <div class="turn-foot">${bar}${wer}</div>
     </div>`;
   }).join("");
@@ -658,24 +643,24 @@ function markKeyterms(html, hits) {
 
 function renderStats() {
   const finals = orderedTurns().filter((turn) => turn.final);
-  const scored = orderedTurns().filter((turn) => turn.accuracy && turn.accuracy.wer !== null);
 
-  // Aggregate word error rate -- total errors over total reference words, which is how
-  // WER is defined. Averaging per-turn rates would let a two-word turn outweigh a
-  // twenty-word one.
-  let errors = 0;
-  let words = 0;
-  for (const turn of scored) {
-    for (const op of turn.accuracy.ops) {
-      if (op.kind !== "ins") words++;
-      if (op.kind !== "ok") errors++;
-    }
-  }
-  $("stat-wer").innerHTML = words
-    ? `${(errors / words * 100).toFixed(1)}<span class="unit">%</span>` : "&mdash;";
-  $("stat-wer-note").textContent = words
-    ? `${errors} errors in ${words} words spoken`
-    : "against the corpus transcript";
+  // One number, from one global alignment. Per-turn rates are deliberately not shown:
+  // turn boundaries do not line up with the reference's sentence boundaries, so anything
+  // per-turn is an artefact of where the endpointer happened to cut.
+  // Prefer the final full alignment once the session ends; the running total is the
+  // live approximation, which trims reference the speaker has not reached yet.
+  const total = sessionDiff
+    ? {
+        wer: sessionDiff.wer,
+        errors: sessionDiff.ops.filter((op) => op.kind !== "ok").length,
+        words: sessionDiff.ops.filter((op) => op.kind !== "ins").length,
+      }
+    : session_total;
+  $("stat-wer").innerHTML = total
+    ? `${(total.wer * 100).toFixed(1)}<span class="unit">%</span>` : "&mdash;";
+  $("stat-wer-note").textContent = total
+    ? `${total.errors} errors in ${total.words} words spoken`
+    : "against the human transcript";
 
   const hits = new Set();
   for (const turn of orderedTurns()) {
@@ -695,13 +680,24 @@ function renderStats() {
   // switches between turns, and turns that changed language part-way through.
   $("stat-switches-note").textContent = finals.length
     ? (midTurn
-        ? `between turns, plus ${midTurn} turns that switched mid-sentence`
+        ? `between turns · ${midTurn} turns below 0.9 confidence`
         : "between turns · nobody pressed a button")
     : "nobody pressed a button";
 
   const latencies = finals.map((turn) => turn.final.sttMs).sort((a, b) => a - b);
   $("stat-latency").innerHTML = latencies.length
     ? `${latencies[Math.floor(latencies.length / 2)]}<span class="unit">ms</span>` : "&mdash;";
+}
+
+function renderSessionDiff() {
+  const panel = $("diff-panel");
+  if (!sessionDiff) { panel.hidden = true; return; }
+  panel.hidden = false;
+  const hits = new Set();
+  for (const turn of orderedTurns()) {
+    if (turn.accuracy) for (const term of turn.accuracy.keytermsHit) hits.add(term);
+  }
+  $("diff-body").innerHTML = renderDiff(sessionDiff.ops, [...hits]);
 }
 
 function renderKeyterms() {
@@ -715,7 +711,7 @@ function renderKeyterms() {
 }
 
 // ---------------------------------------------------------------------------
-// Latency chart: stacked columns, one per turn, on a single axis.
+// Time-to-final chart: one column per turn, one series, one axis.
 // ---------------------------------------------------------------------------
 
 function renderLatency() {
@@ -723,23 +719,22 @@ function renderLatency() {
   const rows = orderedTurns().filter((turn) => turn.final).map((turn) => ({
     order: turn.order,
     lang: (turn.final.languageCode || "").toUpperCase(),
-    stt: turn.final.sttMs || 0,
-    translate: turn.translation ? turn.translation.translateMs : 0,
-    tts: turn.ttsMs || 0,
+    ms: turn.final.sttMs || 0,
+    confidence: turn.final.languageConfidence || 0,
+    wer: turn.accuracy && turn.accuracy.wer !== null ? turn.accuracy.wer : null,
     transcript: turn.final.transcript,
   }));
 
   const width = svg.clientWidth || 700;
   const height = 180;
-  const pad = { top: 10, right: 8, bottom: 22, left: 38 };
+  const pad = { top: 14, right: 8, bottom: 22, left: 42 };
   const plotW = Math.max(width - pad.left - pad.right, 10);
   const plotH = height - pad.top - pad.bottom;
 
   if (rows.length === 0) { svg.innerHTML = ""; return; }
 
-  const max = Math.max(...rows.map((r) => r.stt + r.translate + r.tts), 100);
-  // Round the axis top to a clean number so the ticks read 0 / 500 / 1,000.
-  const step = max > 1500 ? 500 : max > 600 ? 250 : 100;
+  const max = Math.max(...rows.map((r) => r.ms), 100);
+  const step = max > 1500 ? 500 : max > 600 ? 250 : max > 300 ? 100 : 50;
   const top = Math.ceil(max / step) * step;
   const y = (value) => pad.top + plotH - (value / top) * plotH;
 
@@ -755,60 +750,37 @@ function renderLatency() {
 
   const columns = rows.map((row, index) => {
     const x = pad.left + index * band + (band - barW) / 2;
-    const total = row.stt + row.translate + row.tts;
-    const scale = plotH / top;
-
-    // 2px surface gap between stacked segments; the top segment gets the 4px rounded
-    // data-end, the one at the baseline stays square.
-    let cursor = pad.top + plotH;
-    const segments = [
-      ["var(--stage-stt)", row.stt],
-      ["var(--stage-translate)", row.translate],
-      ["var(--stage-tts)", row.tts],
-    ].filter(([, value]) => value > 0);
-
-    const rects = segments.map(([fill, value], seg) => {
-      const h = Math.max(value * scale - (seg === 0 ? 0 : 2), 1);
-      cursor -= h;
-      const rect = `<rect x="${x}" y="${cursor}" width="${barW}" height="${h}" fill="${fill}" ${
-        seg === segments.length - 1 ? `rx="3"` : ""}/>`;
-      cursor -= 2;
-      return rect;
-    }).join("");
-
-    return `<g class="col" data-tip="Turn ${row.order} · ${row.lang}&#10;recognise ${row.stt} ms&#10;translate ${row.translate} ms&#10;speak ${row.tts} ms&#10;total ${total} ms">
-      ${rects}
+    const h = Math.max((row.ms / top) * plotH, 1);
+    const werText = row.wer === null ? "not scored" : `WER ${(row.wer * 100).toFixed(0)}%`;
+    return `<g class="col" data-tip="Turn ${row.order} · ${row.lang} ${row.confidence.toFixed(2)}&#10;${row.ms} ms to final&#10;${werText}">
+      <rect x="${x}" y="${pad.top + plotH - h}" width="${barW}" height="${h}" rx="3" fill="var(--latency)"/>
       <rect x="${x - 1.5}" y="${pad.top}" width="${barW + 3}" height="${plotH}" fill="transparent"/>
     </g>`;
   }).join("");
 
-  // Label the extreme only. A number on every column is unreadable and goes unread.
-  const slowest = rows.reduce((worst, row, index) =>
-    (row.stt + row.translate + row.tts) > (worst.value)
-      ? { index, value: row.stt + row.translate + row.tts } : worst, { index: 0, value: 0 });
-  const labelX = pad.left + slowest.index * band + band / 2;
-  const label = `<text x="${labelX}" y="${y(slowest.value) - 6}" text-anchor="middle"
-    style="font:600 10.5px var(--sans); fill: var(--ink-2)">${slowest.value} ms</text>`;
+  // The median, drawn once. It is the number in the stat tile, so showing where it sits
+  // among the turns is more use than labelling every column.
+  const sorted = rows.map((r) => r.ms).sort((a, b) => a - b);
+  const p50 = sorted[Math.floor(sorted.length / 2)];
+  const medianLine = `
+    <line x1="${pad.left}" x2="${width - pad.right}" y1="${y(p50)}" y2="${y(p50)}"
+      stroke="var(--ink-2)" stroke-width="1.5" stroke-dasharray="0"/>
+    <text x="${width - pad.right}" y="${y(p50) - 6}" text-anchor="end"
+      style="font:600 10.5px var(--sans); fill: var(--ink-2)">median ${p50} ms</text>`;
 
   svg.setAttribute("viewBox", `0 0 ${width} ${height}`);
-  svg.innerHTML = `<g class="axis">${ticks.join("")}</g>${columns}${label}
+  svg.innerHTML = `<g class="axis">${ticks.join("")}</g>${columns}${medianLine}
     <text class="axis" x="${pad.left}" y="${height - 6}" style="font:10.5px var(--sans); fill: var(--ink-muted)">turn 1</text>
     <text class="axis" x="${width - pad.right}" y="${height - 6}" text-anchor="end" style="font:10.5px var(--sans); fill: var(--ink-muted)">turn ${rows.length}</text>`;
 
   const body = document.querySelector("#latency-table tbody");
   body.innerHTML = rows.map((row) => `<tr>
     <td class="num">${row.order}</td><td class="num">${row.lang}</td>
-    <td class="num">${row.stt}</td><td class="num">${row.translate}</td>
-    <td class="num">${row.tts}</td>
-    <td class="num">${row.stt + row.translate + row.tts}</td>
+    <td class="num">${row.confidence.toFixed(2)}</td>
+    <td class="num">${row.ms}</td>
+    <td class="num">${row.wer === null ? "—" : (row.wer * 100).toFixed(0) + "%"}</td>
     <td>${escapeHtml(row.transcript)}</td></tr>`).join("");
 }
-
-// Universal-3.5 Pro Realtime, from AssemblyAI's published pricing. Used only to turn
-// the idle stretch into a number a customer can act on.
-const RATE_PER_HOUR = 0.45;
-const FLEET = 100000;
-const SESSIONS_PER_DEVICE_PER_DAY = 6;
 
 function renderMeter(connectionMs, audioMs) {
   const connection = Math.max(connectionMs, 1);
@@ -889,11 +861,12 @@ $("theme").addEventListener("click", () => {
 addEventListener("resize", renderLatency);
 
 fetch("/api/health").then((response) => response.json()).then((health) => {
-  $("footer").innerHTML = health.apiKeyConfigured
-    ? "API key configured. Play runs a live session against AssemblyAI."
-    : "No <code>ASSEMBLYAI_API_KEY</code> set, so Play replays the bundled sample. " +
-      "Audio and transcript from the Bangor Miami corpus (Deuchar et al., Bangor University), " +
-      "used under GPL-3 with the TalkBank code of ethics.";
+  $("footer").innerHTML =
+    (health.apiKeyConfigured
+      ? "API key configured &mdash; Play runs a new live session against AssemblyAI. "
+      : "No <code>ASSEMBLYAI_API_KEY</code> set, so Play replays a previously recorded real session. ") +
+    "Audio and reference transcript from the Bangor Miami corpus (Deuchar et al., Bangor " +
+    "University), used under GPL-3 with the TalkBank code of ethics.";
 });
 
 connect();

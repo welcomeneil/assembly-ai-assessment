@@ -4,7 +4,7 @@
  * This is the only place a number on the dashboard is computed, so it is the one file
  * with unit tests. See score.test.ts.
  *
- * CHAT-format markup in the corpus transcript is stripped by fixtures/build_fixture.py
+ * CHAT-format markup in the corpus transcript is stripped by fixtures/build_reference.py
  * before it ever reaches here -- this module only sees plain text.
  */
 

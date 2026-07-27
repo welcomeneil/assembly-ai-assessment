@@ -21,15 +21,22 @@ export interface DeviceContext {
 /**
  * Build the `prompt` value.
  *
- * This is the largest accuracy lever available and it costs nothing to turn on.
- * AssemblyAI's prompting guide reports, over 20,000 real calls: a domain-level prompt
- * cuts word error rate 5%, a scenario-level prompt 10%, and a detailed prompt 21% with
- * a 29% cut in entity error rate. Detailed means 20-50 words of plain prose describing
- * the audio -- not a keyword list, which is what `keyterms_prompt` is for.
+ * Not sent by default, and this is the most interesting result in the demo.
  *
- * A handheld already knows everything needed to write one: GPS gives the location, the
- * user picked the situation, and the itinerary supplies the names. The user types
- * nothing.
+ * AssemblyAI's prompting guide reports, over 20,000 real calls, that a detailed prompt
+ * cuts word error rate 21% and entity error rate 29%. On the sample here it did the
+ * opposite: 29.2% -> 33.3% word error rate, identical across three runs. Reproducible,
+ * so not noise.
+ *
+ * A plausible reason is that the prompt is written in English while most of the audio
+ * is Spanish, so it biases the recogniser the wrong way -- but that is a hypothesis,
+ * not a finding, and it is one clip. The honest conclusion is narrower: a published
+ * benchmark is a reason to test a lever, not a reason to ship it. iTranslate should
+ * measure this on their own audio before turning it on.
+ *
+ * Kept here, and reachable through the API, because it is the first thing to re-test
+ * on their recordings -- a handheld already knows everything needed to write one: GPS
+ * gives the location, the user picked the situation, the itinerary supplies the names.
  */
 export function buildPrompt(context: DeviceContext): string {
   const [from, to] = context.pair;
@@ -46,6 +53,9 @@ export function buildPrompt(context: DeviceContext): string {
 
 /**
  * Build `keyterms_prompt`.
+ *
+ * This is the lever that actually paid on the sample: 29.2% -> 25.9% word error rate
+ * over three runs, and it is what puts the landmark names on screen correctly.
  *
  * Limits are 100 terms per session, 50 characters each. Common words are left out --
  * they are already well represented in training data, and spending the budget on them
@@ -71,24 +81,29 @@ export function buildParams(context: DeviceContext): Record<string, string> {
     speech_model: "universal-3-5-pro",
 
     // Both languages declared up front. The device is not told which one is coming.
-    language_codes: context.pair.join(","),
+    //
+    // This is an array parameter and has to be JSON-encoded on the query string. A
+    // comma-joined string is rejected with `Invalid 'language_codes.0'`, which is easy
+    // to misread as "the language is unsupported" rather than "the encoding is wrong" --
+    // the server parsed "en,es" as a single code. Repeated `language_codes=` params
+    // work too; both are verified against the live API.
+    language_codes: JSON.stringify(context.pair),
 
     // This is what removes the language button: every turn comes back tagged with the
     // language it was actually spoken in, plus a confidence.
     language_detection: "true",
 
-    // The device is held out between two people in a market, a station, a restaurant.
-    // That is far-field audio with other voices in it, not a headset.
-    voice_focus: "far-field",
-
-    // A translation device can afford latency a voice agent cannot -- the user is
-    // waiting for a sentence to be spoken back, not for a turn-taking cue. Spend it
-    // on accuracy.
-    mode: "max_accuracy",
-
-    // Two people handing a device back and forth pause longer than one person
-    // thinking. Ending the turn too early cuts the second half of a sentence.
-    min_turn_silence: "480",
+    // Deliberately left at their defaults: `voice_focus`, `mode` and `min_turn_silence`.
+    //
+    // All three were in an earlier version of this config on the reasoning that a
+    // handheld held at arm's length is far-field audio and that a translator can afford
+    // latency. Measured on the sample, that combination cost 4.8 points of word error
+    // rate and collapsed 10 turns into 6 -- `min_turn_silence: 480` merged turns that
+    // the default splits correctly. See fixtures/MEASUREMENTS.md.
+    //
+    // They may still be right for iTranslate's real device audio, which is not what
+    // this corpus recording is. That is a question for their 30 minutes of recordings,
+    // not for my reasoning about their hardware.
 
     // 16 kHz mono PCM is what the device's microphone path produces.
     encoding: "pcm_s16le",
@@ -97,23 +112,14 @@ export function buildParams(context: DeviceContext): Record<string, string> {
     // Cheap insurance on cellular: notice a dead connection instead of waiting on it.
     session_heartbeat: "true",
 
-    // Translate inside the streaming session. The alternative is shipping every final
-    // turn back out to a second service and waiting on another round trip, which on a
-    // cellular handheld is the difference between one network hop and three.
-    llm_gateway: JSON.stringify({
-      model: "claude-sonnet-4-6",
-      messages: [
-        {
-          role: "user",
-          content:
-            `Translate the transcript between ${languageName(context.pair[0])} and ` +
-            `${languageName(context.pair[1])}, into whichever of the two it is not ` +
-            `already in. Reply with the translation only.\n\nTranscript: {{turn}}`,
-        },
-      ],
-      max_tokens: 300,
-    }),
+    // The lever that measured well. Array parameter, JSON-encoded like language_codes.
+    keyterms_prompt: JSON.stringify(buildKeyterms(context)),
   };
+
+  // Deliberately not set: `llm_gateway`. AssemblyAI can carry the translation on this
+  // same socket, and there is a decent latency argument for it -- but iTranslate asked
+  // about recognition accuracy and already has a translation stack. This demo stays on
+  // the thing they asked about. Translation and text-to-speech remain theirs.
 }
 
 function languageName(code: string): string {
@@ -129,25 +135,23 @@ function languageName(code: string): string {
 }
 
 /**
- * The context for the bundled sample: two bilingual cousins in a Miami restaurant
- * planning a trip. In production the device fills this in from GPS and the itinerary.
+ * The context for the bundled sample: a family talking about a cruise to France and a
+ * day trip to Paris, switching between Spanish and English throughout. In production
+ * the device fills this in from GPS, the selected situation and the itinerary.
  */
 export const SAMPLE_CONTEXT: DeviceContext = {
-  location: "a restaurant in Miami",
-  situation: "Informal conversation between two people planning a trip, discussing " +
-    "cities, flights and ticket prices.",
+  location: "France",
+  situation: "A family talking about a cruise from England to France and a day trip " +
+    "to Paris, discussing ships, ports, tour times and landmarks.",
   knownNames: [
-    "Fort Lauderdale",
-    "Kingston",
-    "Nicaragua",
-    "Jamaica",
-    "Chicago",
-    "Boston",
-    "Washington",
-    "Paige",
-    "Fernando",
-    "Michael",
-    "Lauren",
+    "Torre Eiffel",
+    "Notre Dame",
+    "Arco del Triunfo",
+    "Louvre",
+    "Guggenheim",
+    "Francia",
+    "Paris",
+    "English channel",
   ],
   pair: ["en", "es"],
 };

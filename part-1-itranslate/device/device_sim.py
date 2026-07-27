@@ -18,9 +18,11 @@ Three things worth reading the code for:
      frozen for months. Served, it can change for every device at once -- or for 1% of
      them first.
 
-  3. Translation happens inside the streaming session via the llm_gateway parameter,
-     so a finished turn does not have to make a second round trip to a second service
-     before the user hears anything.
+  3. Scope is recognition only. iTranslate asked about speech-to-text accuracy and
+     already owns the translation and text-to-speech legs, so this stops at the final
+     transcript and marks the seam where their pipeline continues. (AssemblyAI can
+     carry translation on this same socket via the llm_gateway parameter if they ever
+     want it -- that is a separate conversation, not this demo.)
 
 Usage:
 
@@ -39,8 +41,6 @@ from __future__ import annotations
 import argparse
 import asyncio
 import json
-import shutil
-import subprocess
 import sys
 import time
 import urllib.error
@@ -155,31 +155,6 @@ async def mic_chunks():
 
 
 # ---------------------------------------------------------------------------
-# Text to speech
-#
-# AssemblyAI does not do TTS and iTranslate already has an engine, so this is the seam
-# where theirs drops in. macOS `say` is here only so the demo makes a sound.
-# ---------------------------------------------------------------------------
-
-VOICES = {"es": "Monica", "en": "Samantha", "fr": "Amelie", "de": "Anna",
-          "it": "Alice", "pt": "Luciana"}
-
-
-def speak(text: str, language: str) -> int:
-    """Play the translation. Returns milliseconds spent."""
-    if not text or not shutil.which("say"):
-        return 0
-    started = time.monotonic()
-    voice = VOICES.get(language)
-    command = ["say"] + (["-v", voice] if voice else []) + [text]
-    try:
-        subprocess.run(command, check=False, timeout=20)
-    except subprocess.TimeoutExpired:
-        pass
-    return int((time.monotonic() - started) * 1000)
-
-
-# ---------------------------------------------------------------------------
 # The session
 # ---------------------------------------------------------------------------
 
@@ -201,11 +176,6 @@ async def run(args: argparse.Namespace) -> None:
     def at() -> int:
         return int((time.monotonic() - started) * 1000)
 
-    # Turn order -> when its final transcript arrived, so translation latency is
-    # measured rather than guessed, and turn order -> its recognition latency, so the
-    # summary line can print the whole budget once the turn has been spoken.
-    finalised: dict[int, int] = {}
-    recognition_ms: dict[int, int] = {}
     audio_ms = 0
 
     async with websockets.connect(url, max_size=None) as socket:
@@ -239,16 +209,16 @@ async def run(args: argparse.Namespace) -> None:
                 elif kind == "Turn" and message.get("end_of_turn"):
                     order = message["turn_order"]
                     now = at()
-                    finalised[order] = now
                     words = message.get("words") or []
-                    recognition_ms[order] = max(
-                        0, now - (words[-1]["end"] if words else now))
+                    # Audio is paced at real time, so wall clock minus the audio
+                    # position of the last word is the recogniser's actual lag.
                     audio_end = words[-1]["end"] if words else now
                     language = message.get("language_code") or "??"
                     confidence = message.get("language_confidence") or 0.0
                     stt_ms = max(0, now - audio_end)
 
                     print(f"  {BOLD}[{language} {confidence:.2f}]{RESET} {message['transcript']}")
+                    print(f"  {DIM}{stt_ms} ms to final transcript{RESET}\n")
 
                     if args.dashboard:
                         publish(args.server, {
@@ -262,30 +232,16 @@ async def run(args: argparse.Namespace) -> None:
                             "audioEndMs": audio_end, "sttMs": stt_ms,
                         })
 
-                elif kind in ("LlmGatewayResponse", "LLMGatewayResponse"):
-                    order = message.get("turn_order", 0)
-                    choices = (message.get("data") or {}).get("choices") or [{}]
-                    text = (choices[0].get("message") or {}).get("content", "").strip()
-                    now = at()
-                    translate_ms = now - finalised.get(order, now)
-                    print(f"  {DIM}→{RESET} {text}")
-
-                    if args.dashboard:
-                        publish(args.server, {
-                            "type": "turn.translation", "at": now, "order": order,
-                            "target": "", "text": text, "translateMs": translate_ms})
-
-                    # The device speaks. This blocks, exactly as it does on the handheld:
-                    # you cannot play two translations over each other.
-                    tts_ms = await asyncio.to_thread(speak, text, args.speak_as)
-                    if tts_ms and args.dashboard:
-                        publish(args.server, {
-                            "type": "turn.speech", "at": at(), "order": order,
-                            "ttsMs": tts_ms})
-                    stt_ms = recognition_ms.get(order, 0)
-                    print(f"  {DIM}recognise {stt_ms} ms · translate {translate_ms} ms"
-                          f"{f' · speak {tts_ms} ms' if tts_ms else ''}"
-                          f" · total {stt_ms + translate_ms + tts_ms} ms{RESET}\n")
+                    # ---- seam ----------------------------------------------
+                    # This is where iTranslate's existing pipeline takes over: the
+                    # finalised transcript, tagged with the language it was actually
+                    # spoken in, goes to their translation engine and then their TTS.
+                    # Nothing above this line had to know which language was coming.
+                    #
+                    #     translated = itranslate.translate(
+                    #         message["transcript"], source=language, target=other)
+                    #     itranslate.speak(translated, target)
+                    # --------------------------------------------------------
 
                 elif kind == "Termination":
                     print(f"\n{DIM}session closed · {message['audio_duration_seconds']:.1f}s "
@@ -331,8 +287,6 @@ def main() -> int:
                         help="the fleet server that mints tokens (default: %(default)s)")
     parser.add_argument("--dashboard", action="store_true",
                         help="publish events to the dashboard as well as the terminal")
-    parser.add_argument("--speak-as", default="es", metavar="LANG",
-                        help="TTS voice language for the translation (default: %(default)s)")
     args = parser.parse_args()
 
     try:

@@ -1,0 +1,228 @@
+{
+  "corpus": "Bangor Miami corpus (Deuchar et al.), file sastre8",
+  "window": "utterances 849-874",
+  "audioFile": "paris.wav",
+  "startMs": 1538922,
+  "endMs": 1594655,
+  "prompt": "A family talking about a cruise from England to France and a day trip to Paris. The speakers are bilingual and switch between Spanish and English mid-sentence. Ships, ports, tour times and Paris landmarks are discussed.",
+  "keyterms": [
+    "Torre Eiffel",
+    "Notre Dame",
+    "Arco del Triunfo",
+    "Louvre",
+    "Guggenheim",
+    "Francia",
+    "Paris",
+    "English channel"
+  ],
+  "utterances": [
+    {
+      "utterance": 849,
+      "speaker": "PAO",
+      "startMs": 0,
+      "endMs": 952,
+      "text": "the cruise.",
+      "language": "en"
+    },
+    {
+      "utterance": 850,
+      "speaker": "AUD",
+      "startMs": 838,
+      "endMs": 1128,
+      "text": "the",
+      "language": "en"
+    },
+    {
+      "utterance": 851,
+      "speaker": "AUD",
+      "startMs": 1058,
+      "endMs": 1633,
+      "text": "no no.",
+      "language": "en"
+    },
+    {
+      "utterance": 852,
+      "speaker": "PAO",
+      "startMs": 1145,
+      "endMs": 1929,
+      "text": "cruise ship.",
+      "language": "en"
+    },
+    {
+      "utterance": 853,
+      "speaker": "AUD",
+      "startMs": 2447,
+      "endMs": 3272,
+      "text": "cómo se llama?",
+      "language": "es"
+    },
+    {
+      "utterance": 854,
+      "speaker": "AUD",
+      "startMs": 3243,
+      "endMs": 5744,
+      "text": "el el naviero.",
+      "language": "es"
+    },
+    {
+      "utterance": 855,
+      "speaker": "AUD",
+      "startMs": 6351,
+      "endMs": 9004,
+      "text": "el barco el barco el barco.",
+      "language": "es"
+    },
+    {
+      "utterance": 856,
+      "speaker": "PAO",
+      "startMs": 8129,
+      "endMs": 9673,
+      "text": "el barco yes.",
+      "language": "es"
+    },
+    {
+      "utterance": 857,
+      "speaker": "AUD",
+      "startMs": 8990,
+      "endMs": 13553,
+      "text": "entonces el barco la primer día sale por la tarde como a las cinco de la tarde.",
+      "language": "es"
+    },
+    {
+      "utterance": 858,
+      "speaker": "AUD",
+      "startMs": 13520,
+      "endMs": 16005,
+      "text": "y cruza el canal y llega a Francia.",
+      "language": "es"
+    },
+    {
+      "utterance": 859,
+      "speaker": "AUD",
+      "startMs": 17057,
+      "endMs": 18108,
+      "text": "entonces",
+      "language": "es"
+    },
+    {
+      "utterance": 860,
+      "speaker": "PAO",
+      "startMs": 17057,
+      "endMs": 18090,
+      "text": "the English channel?",
+      "language": "en"
+    },
+    {
+      "utterance": 861,
+      "speaker": "AUD",
+      "startMs": 18128,
+      "endMs": 19405,
+      "text": "yeah the English channel.",
+      "language": "en"
+    },
+    {
+      "utterance": 862,
+      "speaker": "AUD",
+      "startMs": 19434,
+      "endMs": 20246,
+      "text": "y cruza.",
+      "language": "es"
+    },
+    {
+      "utterance": 863,
+      "speaker": "AUD",
+      "startMs": 20235,
+      "endMs": 22063,
+      "text": "y vamos entonces a Francia.",
+      "language": "es"
+    },
+    {
+      "utterance": 864,
+      "speaker": "AUD",
+      "startMs": 22171,
+      "endMs": 25929,
+      "text": "entonces en Francia compramos un ticket abuelo y yo.",
+      "language": "es"
+    },
+    {
+      "utterance": 865,
+      "speaker": "AUD",
+      "startMs": 25808,
+      "endMs": 28989,
+      "text": "que el tour demora como diez horas y media.",
+      "language": "es"
+    },
+    {
+      "utterance": 866,
+      "speaker": "AUD",
+      "startMs": 29579,
+      "endMs": 32232,
+      "text": "y nos van a llevar desde el puerto hasta Paris.",
+      "language": "es"
+    },
+    {
+      "utterance": 867,
+      "speaker": "AUD",
+      "startMs": 33449,
+      "endMs": 42881,
+      "text": "entonces tenemos en en ese día incluye un viaje por el en un barco por el río Seine y con un almuerzo.",
+      "language": "es"
+    },
+    {
+      "utterance": 868,
+      "speaker": "AUD",
+      "startMs": 42918,
+      "endMs": 45507,
+      "text": "y ahí se ve la Torre Eiffel.",
+      "language": "es"
+    },
+    {
+      "utterance": 869,
+      "speaker": "AUD",
+      "startMs": 45573,
+      "endMs": 48168,
+      "text": "se ve la Notre Dame church.",
+      "language": "es"
+    },
+    {
+      "utterance": 870,
+      "speaker": "AUD",
+      "startMs": 48186,
+      "endMs": 50196,
+      "text": "vemos el Arco Triunfo.",
+      "language": "es"
+    },
+    {
+      "utterance": 871,
+      "speaker": "AUD",
+      "startMs": 50186,
+      "endMs": 54192,
+      "text": "y cómo se llama el museo este importante?",
+      "language": "es"
+    },
+    {
+      "utterance": 872,
+      "speaker": "PAO",
+      "startMs": 54067,
+      "endMs": 55385,
+      "text": "the Guggenburgh?",
+      "language": "en"
+    },
+    {
+      "utterance": 873,
+      "speaker": "AUD",
+      "startMs": 55396,
+      "endMs": 56761,
+      "text": "el Louvre el Louvre.",
+      "language": "es"
+    },
+    {
+      "utterance": 874,
+      "speaker": "PAO",
+      "startMs": 55420,
+      "endMs": 55733,
+      "text": "no.",
+      "language": "en"
+    }
+  ]
+}

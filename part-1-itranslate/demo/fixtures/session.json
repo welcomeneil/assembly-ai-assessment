@@ -1,0 +1,2131 @@
+{
+  "recordedAt": "2026-07-27T11:32:29.637Z",
+  "note": "A real AssemblyAI session, recorded by src/capture.ts. Every transcript, confidence, language label and timing here came off the wire. Regenerate with `npm run capture`.",
+  "events": [
+    {
+      "type": "session.open",
+      "at": 537,
+      "mode": "live",
+      "audio": "paris.wav",
+      "config": {
+        "params": {
+          "speech_model": "universal-3-5-pro",
+          "language_codes": "[\"en\",\"es\"]",
+          "language_detection": "true",
+          "encoding": "pcm_s16le",
+          "sample_rate": "16000",
+          "session_heartbeat": "true",
+          "keyterms_prompt": "[\"Torre Eiffel\",\"Notre Dame\",\"Arco del Triunfo\",\"Louvre\",\"Guggenheim\",\"Francia\",\"Paris\",\"English channel\"]"
+        },
+        "prompt": "",
+        "keyterms": [
+          "Torre Eiffel",
+          "Notre Dame",
+          "Arco del Triunfo",
+          "Louvre",
+          "Guggenheim",
+          "Francia",
+          "Paris",
+          "English channel"
+        ]
+      }
+    },
+    {
+      "type": "turn.partial",
+      "at": 1108,
+      "order": 0,
+      "transcript": "It both."
+    },
+    {
+      "type": "meter",
+      "at": 1293,
+      "connectionMs": 1293,
+      "audioMs": 902
+    },
+    {
+      "type": "meter",
+      "at": 2294,
+      "connectionMs": 2294,
+      "audioMs": 2001
+    },
+    {
+      "type": "turn.partial",
+      "at": 2308,
+      "order": 0,
+      "transcript": "A boat. No, no."
+    },
+    {
+      "type": "turn.final",
+      "at": 2511,
+      "order": 0,
+      "transcript": "A boat. No, no.",
+      "words": [
+        {
+          "text": "A",
+          "confidence": 0.687381
+        },
+        {
+          "text": "boat.",
+          "confidence": 0.841101
+        },
+        {
+          "text": "No,",
+          "confidence": 0.939829
+        },
+        {
+          "text": "no.",
+          "confidence": 0.990983
+        }
+      ],
+      "languageCode": "en",
+      "languageConfidence": 0.356959,
+      "midTurnSwitch": true,
+      "audioStartMs": 0,
+      "audioEndMs": 2173,
+      "sttMs": 338
+    },
+    {
+      "type": "turn.accuracy",
+      "at": 2511,
+      "order": 0,
+      "keytermsHit": [],
+      "session": {
+        "wer": 0.9861111111111112,
+        "errors": 142,
+        "words": 144
+      }
+    },
+    {
+      "type": "meter",
+      "at": 3294,
+      "connectionMs": 3294,
+      "audioMs": 3001
+    },
+    {
+      "type": "turn.partial",
+      "at": 3411,
+      "order": 1,
+      "transcript": "Well, there are my"
+    },
+    {
+      "type": "meter",
+      "at": 4294,
+      "connectionMs": 4294,
+      "audioMs": 4000
+    },
+    {
+      "type": "turn.partial",
+      "at": 4609,
+      "order": 1,
+      "transcript": "What they have—"
+    },
+    {
+      "type": "turn.partial",
+      "at": 4807,
+      "order": 1,
+      "transcript": "What they have—"
+    },
+    {
+      "type": "turn.partial",
+      "at": 5010,
+      "order": 1,
+      "transcript": "What they have a—"
+    },
+    {
+      "type": "meter",
+      "at": 5293,
+      "connectionMs": 5293,
+      "audioMs": 5001
+    },
+    {
+      "type": "turn.partial",
+      "at": 6109,
+      "order": 1,
+      "transcript": "Oh, se llama el Naviero."
+    },
+    {
+      "type": "meter",
+      "at": 6293,
+      "connectionMs": 6293,
+      "audioMs": 6001
+    },
+    {
+      "type": "turn.final",
+      "at": 6310,
+      "order": 1,
+      "transcript": "Oh, se llama el Naviero.",
+      "words": [
+        {
+          "text": "Oh,",
+          "confidence": 0.664248
+        },
+        {
+          "text": "se",
+          "confidence": 0.599896
+        },
+        {
+          "text": "llama",
+          "confidence": 0.999869
+        },
+        {
+          "text": "el",
+          "confidence": 0.559104
+        },
+        {
+          "text": "Naviero.",
+          "confidence": 0.795565
+        }
+      ],
+      "languageCode": "es",
+      "languageConfidence": 0.664381,
+      "midTurnSwitch": true,
+      "audioStartMs": 2304,
+      "audioEndMs": 5979,
+      "sttMs": 331
+    },
+    {
+      "type": "turn.accuracy",
+      "at": 6310,
+      "order": 1,
+      "keytermsHit": [],
+      "session": {
+        "wer": 0.5384615384615384,
+        "errors": 7,
+        "words": 13
+      }
+    },
+    {
+      "type": "turn.partial",
+      "at": 7208,
+      "order": 2,
+      "transcript": "El"
+    },
+    {
+      "type": "meter",
+      "at": 7293,
+      "connectionMs": 7293,
+      "audioMs": 7001
+    },
+    {
+      "type": "meter",
+      "at": 8294,
+      "connectionMs": 8294,
+      "audioMs": 8002
+    },
+    {
+      "type": "turn.partial",
+      "at": 8409,
+      "order": 2,
+      "transcript": "El barco, el barco."
+    },
+    {
+      "type": "meter",
+      "at": 9295,
+      "connectionMs": 9295,
+      "audioMs": 9000
+    },
+    {
+      "type": "turn.partial",
+      "at": 9610,
+      "order": 2,
+      "transcript": "El barco, el barco, el barco."
+    },
+    {
+      "type": "meter",
+      "at": 10296,
+      "connectionMs": 10296,
+      "audioMs": 10001
+    },
+    {
+      "type": "turn.partial",
+      "at": 10714,
+      "order": 2,
+      "transcript": "El barco, el barco, el barco. Entonces, el barco"
+    },
+    {
+      "type": "meter",
+      "at": 11296,
+      "connectionMs": 11296,
+      "audioMs": 11001
+    },
+    {
+      "type": "turn.partial",
+      "at": 11909,
+      "order": 2,
+      "transcript": "El barco, el barco, el barco. Entonces el barco, el primer día sale"
+    },
+    {
+      "type": "meter",
+      "at": 12296,
+      "connectionMs": 12296,
+      "audioMs": 12001
+    },
+    {
+      "type": "turn.partial",
+      "at": 13109,
+      "order": 2,
+      "transcript": "El barco, el barco, el barco. Entonces, el barco, el primer día sale por la tarde como a las"
+    },
+    {
+      "type": "meter",
+      "at": 13295,
+      "connectionMs": 13295,
+      "audioMs": 13001
+    },
+    {
+      "type": "meter",
+      "at": 14295,
+      "connectionMs": 14295,
+      "audioMs": 14002
+    },
+    {
+      "type": "turn.partial",
+      "at": 14311,
+      "order": 2,
+      "transcript": "El barco, el barco, el barco. Entonces el barco, el primer día sale por la tarde, como a las 5 de la tarde, y cruza"
+    },
+    {
+      "type": "meter",
+      "at": 15296,
+      "connectionMs": 15296,
+      "audioMs": 15001
+    },
+    {
+      "type": "turn.partial",
+      "at": 15511,
+      "order": 2,
+      "transcript": "El barco, el barco, el barco. Entonces, el barco, el primer día sale por la tarde, como a las 5 de la tarde, y cruza el canal"
+    },
+    {
+      "type": "meter",
+      "at": 16295,
+      "connectionMs": 16295,
+      "audioMs": 16002
+    },
+    {
+      "type": "turn.final",
+      "at": 16712,
+      "order": 2,
+      "transcript": "El barco, el barco, el barco. Entonces el barco, el primer día sale por la tarde, como a las 5 de la tarde, y cruza el canal y llega a Francia.",
+      "words": [
+        {
+          "text": "El",
+          "confidence": 0.984238
+        },
+        {
+          "text": "barco,",
+          "confidence": 0.995137
+        },
+        {
+          "text": "el",
+          "confidence": 0.999551
+        },
+        {
+          "text": "barco,",
+          "confidence": 0.996824
+        },
+        {
+          "text": "el",
+          "confidence": 0.994282
+        },
+        {
+          "text": "barco.",
+          "confidence": 0.99705
+        },
+        {
+          "text": "Entonces",
+          "confidence": 0.999213
+        },
+        {
+          "text": "el",
+          "confidence": 0.685457
+        },
+        {
+          "text": "barco,",
+          "confidence": 0.901375
+        },
+        {
+          "text": "el",
+          "confidence": 0.904781
+        },
+        {
+          "text": "primer",
+          "confidence": 0.999861
+        },
+        {
+          "text": "día",
+          "confidence": 0.999964
+        },
+        {
+          "text": "sale",
+          "confidence": 0.955618
+        },
+        {
+          "text": "por",
+          "confidence": 0.99704
+        },
+        {
+          "text": "la",
+          "confidence": 0.999701
+        },
+        {
+          "text": "tarde,",
+          "confidence": 0.997436
+        },
+        {
+          "text": "como",
+          "confidence": 0.999854
+        },
+        {
+          "text": "a",
+          "confidence": 0.999523
+        },
+        {
+          "text": "las",
+          "confidence": 0.999975
+        },
+        {
+          "text": "5",
+          "confidence": 0.999764
+        },
+        {
+          "text": "de",
+          "confidence": 0.997096
+        },
+        {
+          "text": "la",
+          "confidence": 0.999975
+        },
+        {
+          "text": "tarde,",
+          "confidence": 0.996981
+        },
+        {
+          "text": "y",
+          "confidence": 0.999507
+        },
+        {
+          "text": "cruza",
+          "confidence": 0.999915
+        },
+        {
+          "text": "el",
+          "confidence": 0.999798
+        },
+        {
+          "text": "canal",
+          "confidence": 0.997676
+        },
+        {
+          "text": "y",
+          "confidence": 0.998718
+        },
+        {
+          "text": "llega",
+          "confidence": 0.999931
+        },
+        {
+          "text": "a",
+          "confidence": 0.999046
+        },
+        {
+          "text": "Francia.",
+          "confidence": 0.999237
+        }
+      ],
+      "languageCode": "es",
+      "languageConfidence": 0.925713,
+      "midTurnSwitch": false,
+      "audioStartMs": 6112,
+      "audioEndMs": 16278,
+      "sttMs": 434
+    },
+    {
+      "type": "turn.accuracy",
+      "at": 16712,
+      "order": 2,
+      "keytermsHit": [
+        "Francia"
+      ],
+      "session": {
+        "wer": 0.46153846153846156,
+        "errors": 30,
+        "words": 65
+      }
+    },
+    {
+      "type": "meter",
+      "at": 17296,
+      "connectionMs": 17296,
+      "audioMs": 17001
+    },
+    {
+      "type": "turn.partial",
+      "at": 17607,
+      "order": 3,
+      "transcript": "And you"
+    },
+    {
+      "type": "meter",
+      "at": 18295,
+      "connectionMs": 18295,
+      "audioMs": 18002
+    },
+    {
+      "type": "turn.partial",
+      "at": 18710,
+      "order": 3,
+      "transcript": "English channel."
+    },
+    {
+      "type": "meter",
+      "at": 19295,
+      "connectionMs": 19295,
+      "audioMs": 19001
+    },
+    {
+      "type": "turn.partial",
+      "at": 19810,
+      "order": 3,
+      "transcript": "English channel? Yeah, the English channel."
+    },
+    {
+      "type": "meter",
+      "at": 20296,
+      "connectionMs": 20296,
+      "audioMs": 20002
+    },
+    {
+      "type": "turn.partial",
+      "at": 20908,
+      "order": 3,
+      "transcript": "Entonces, y a The English Channel, y cruza y va"
+    },
+    {
+      "type": "meter",
+      "at": 21296,
+      "connectionMs": 21296,
+      "audioMs": 21001
+    },
+    {
+      "type": "turn.partial",
+      "at": 22113,
+      "order": 3,
+      "transcript": "Entonces, y cruza, y vamos entonces a Francia."
+    },
+    {
+      "type": "meter",
+      "at": 22296,
+      "connectionMs": 22296,
+      "audioMs": 22000
+    },
+    {
+      "type": "turn.partial",
+      "at": 23210,
+      "order": 3,
+      "transcript": "Entonces, y cruza, y vamos entonces a Francia. Entonces"
+    },
+    {
+      "type": "meter",
+      "at": 23296,
+      "connectionMs": 23296,
+      "audioMs": 23000
+    },
+    {
+      "type": "meter",
+      "at": 24296,
+      "connectionMs": 24296,
+      "audioMs": 24000
+    },
+    {
+      "type": "turn.partial",
+      "at": 24413,
+      "order": 3,
+      "transcript": "Entonces, y cruza, y vamos entonces a Francia. Entonces, en Francia compramos un ticket"
+    },
+    {
+      "type": "meter",
+      "at": 25297,
+      "connectionMs": 25297,
+      "audioMs": 25002
+    },
+    {
+      "type": "turn.partial",
+      "at": 25510,
+      "order": 3,
+      "transcript": "Y cruza y vamos entonces a Francia. Entonces en Francia compramos un ticket, o vuelo yo"
+    },
+    {
+      "type": "turn.partial",
+      "at": 26210,
+      "order": 3,
+      "transcript": "Entonces, y cruza, y vamos entonces a Francia. Entonces, en Francia compramos un ticket, o vuelo yo"
+    },
+    {
+      "type": "meter",
+      "at": 26297,
+      "connectionMs": 26297,
+      "audioMs": 26001
+    },
+    {
+      "type": "turn.partial",
+      "at": 26609,
+      "order": 3,
+      "transcript": "Y cruza y vamos entonces a Francia. Entonces en Francia compramos un ticket, o vuelo yo, que"
+    },
+    {
+      "type": "meter",
+      "at": 27297,
+      "connectionMs": 27297,
+      "audioMs": 27002
+    },
+    {
+      "type": "turn.partial",
+      "at": 27709,
+      "order": 3,
+      "transcript": "Y cruza y vamos entonces a Francia. Entonces en Francia compramos un ticket, o bueno, yo, que el tour de"
+    },
+    {
+      "type": "meter",
+      "at": 28297,
+      "connectionMs": 28297,
+      "audioMs": 28001
+    },
+    {
+      "type": "turn.partial",
+      "at": 28910,
+      "order": 3,
+      "transcript": "Y cruza y vamos entonces a Francia. Entonces en Francia compramos un tiquete, o bueno, yo, que el tour demora como 10 horas y media."
+    },
+    {
+      "type": "meter",
+      "at": 29296,
+      "connectionMs": 29296,
+      "audioMs": 29002
+    },
+    {
+      "type": "turn.final",
+      "at": 29511,
+      "order": 3,
+      "transcript": "Entonces, y cruza, y vamos entonces a Francia. Entonces, en Francia compramos un tiquete, vuelo yo, que el tour demora como 10 horas y media.",
+      "words": [
+        {
+          "text": "Entonces,",
+          "confidence": 0.651604
+        },
+        {
+          "text": "y",
+          "confidence": 0.717126
+        },
+        {
+          "text": "cruza,",
+          "confidence": 0.878267
+        },
+        {
+          "text": "y",
+          "confidence": 0.999357
+        },
+        {
+          "text": "vamos",
+          "confidence": 0.999804
+        },
+        {
+          "text": "entonces",
+          "confidence": 0.999729
+        },
+        {
+          "text": "a",
+          "confidence": 0.999935
+        },
+        {
+          "text": "Francia.",
+          "confidence": 0.999959
+        },
+        {
+          "text": "Entonces,",
+          "confidence": 0.860144
+        },
+        {
+          "text": "en",
+          "confidence": 0.999873
+        },
+        {
+          "text": "Francia",
+          "confidence": 0.999997
+        },
+        {
+          "text": "compramos",
+          "confidence": 0.999974
+        },
+        {
+          "text": "un",
+          "confidence": 0.999917
+        },
+        {
+          "text": "tiquete,",
+          "confidence": 0.871259
+        },
+        {
+          "text": "vuelo",
+          "confidence": 0.682038
+        },
+        {
+          "text": "yo,",
+          "confidence": 0.958491
+        },
+        {
+          "text": "que",
+          "confidence": 0.998982
+        },
+        {
+          "text": "el",
+          "confidence": 0.999819
+        },
+        {
+          "text": "tour",
+          "confidence": 0.999593
+        },
+        {
+          "text": "demora",
+          "confidence": 0.999969
+        },
+        {
+          "text": "como",
+          "confidence": 0.999969
+        },
+        {
+          "text": "10",
+          "confidence": 0.999876
+        },
+        {
+          "text": "horas",
+          "confidence": 0.999948
+        },
+        {
+          "text": "y",
+          "confidence": 0.999744
+        },
+        {
+          "text": "media.",
+          "confidence": 0.998981
+        }
+      ],
+      "languageCode": "es",
+      "languageConfidence": 0.838568,
+      "midTurnSwitch": true,
+      "audioStartMs": 16512,
+      "audioEndMs": 29160,
+      "sttMs": 351
+    },
+    {
+      "type": "turn.accuracy",
+      "at": 29511,
+      "order": 3,
+      "keytermsHit": [
+        "Francia"
+      ],
+      "session": {
+        "wer": 0.2875,
+        "errors": 23,
+        "words": 80
+      }
+    },
+    {
+      "type": "meter",
+      "at": 30297,
+      "connectionMs": 30297,
+      "audioMs": 30001
+    },
+    {
+      "type": "turn.partial",
+      "at": 30412,
+      "order": 4,
+      "transcript": "Y nos van a"
+    },
+    {
+      "type": "meter",
+      "at": 31297,
+      "connectionMs": 31297,
+      "audioMs": 31001
+    },
+    {
+      "type": "turn.partial",
+      "at": 31510,
+      "order": 4,
+      "transcript": "Y nos van a llevar desde el puerto"
+    },
+    {
+      "type": "meter",
+      "at": 32297,
+      "connectionMs": 32297,
+      "audioMs": 32001
+    },
+    {
+      "type": "turn.partial",
+      "at": 32713,
+      "order": 4,
+      "transcript": "Y nos van a llevar desde el puerto hasta París."
+    },
+    {
+      "type": "turn.final",
+      "at": 33013,
+      "order": 4,
+      "transcript": "Y nos van a llevar desde el puerto hasta París.",
+      "words": [
+        {
+          "text": "Y",
+          "confidence": 0.985259
+        },
+        {
+          "text": "nos",
+          "confidence": 0.99996
+        },
+        {
+          "text": "van",
+          "confidence": 0.999325
+        },
+        {
+          "text": "a",
+          "confidence": 0.999998
+        },
+        {
+          "text": "llevar",
+          "confidence": 0.999991
+        },
+        {
+          "text": "desde",
+          "confidence": 0.999978
+        },
+        {
+          "text": "el",
+          "confidence": 0.997536
+        },
+        {
+          "text": "puerto",
+          "confidence": 0.999396
+        },
+        {
+          "text": "hasta",
+          "confidence": 0.999945
+        },
+        {
+          "text": "París.",
+          "confidence": 0.999211
+        }
+      ],
+      "languageCode": "es",
+      "languageConfidence": 0.951628,
+      "midTurnSwitch": false,
+      "audioStartMs": 29312,
+      "audioEndMs": 32660,
+      "sttMs": 353
+    },
+    {
+      "type": "turn.accuracy",
+      "at": 33013,
+      "order": 4,
+      "keytermsHit": [],
+      "session": {
+        "wer": 0.5416666666666666,
+        "errors": 78,
+        "words": 144
+      }
+    },
+    {
+      "type": "meter",
+      "at": 33298,
+      "connectionMs": 33298,
+      "audioMs": 33002
+    },
+    {
+      "type": "turn.partial",
+      "at": 34009,
+      "order": 5,
+      "transcript": "Entonces"
+    },
+    {
+      "type": "meter",
+      "at": 34299,
+      "connectionMs": 34299,
+      "audioMs": 34001
+    },
+    {
+      "type": "turn.partial",
+      "at": 35108,
+      "order": 5,
+      "transcript": "Entonces tenemos"
+    },
+    {
+      "type": "meter",
+      "at": 35299,
+      "connectionMs": 35299,
+      "audioMs": 35001
+    },
+    {
+      "type": "meter",
+      "at": 36300,
+      "connectionMs": 36300,
+      "audioMs": 36001
+    },
+    {
+      "type": "turn.partial",
+      "at": 36308,
+      "order": 5,
+      "transcript": "Entonces tenemos en ese día"
+    },
+    {
+      "type": "meter",
+      "at": 37301,
+      "connectionMs": 37301,
+      "audioMs": 37000
+    },
+    {
+      "type": "turn.partial",
+      "at": 37509,
+      "order": 5,
+      "transcript": "Entonces tenemos en ese viaje, incluye"
+    },
+    {
+      "type": "meter",
+      "at": 38302,
+      "connectionMs": 38302,
+      "audioMs": 38001
+    },
+    {
+      "type": "turn.partial",
+      "at": 38610,
+      "order": 5,
+      "transcript": "Entonces tenemos en ese viaje, incluye un"
+    },
+    {
+      "type": "meter",
+      "at": 39303,
+      "connectionMs": 39303,
+      "audioMs": 39000
+    },
+    {
+      "type": "turn.partial",
+      "at": 39713,
+      "order": 5,
+      "transcript": "Entonces tenemos en ese viaje, incluye un viaje por el"
+    },
+    {
+      "type": "meter",
+      "at": 40304,
+      "connectionMs": 40304,
+      "audioMs": 40001
+    },
+    {
+      "type": "turn.partial",
+      "at": 40808,
+      "order": 5,
+      "transcript": "Entonces tenemos en ese viaje, incluye un viaje por él en un barco por el río"
+    },
+    {
+      "type": "meter",
+      "at": 41304,
+      "connectionMs": 41304,
+      "audioMs": 41002
+    },
+    {
+      "type": "turn.final",
+      "at": 41714,
+      "order": 5,
+      "transcript": "Entonces tenemos en ese viaje, incluye un viaje por él en un barco por el río Sena.",
+      "words": [
+        {
+          "text": "Entonces",
+          "confidence": 0.999828
+        },
+        {
+          "text": "tenemos",
+          "confidence": 0.998836
+        },
+        {
+          "text": "en",
+          "confidence": 0.817342
+        },
+        {
+          "text": "ese",
+          "confidence": 0.988503
+        },
+        {
+          "text": "viaje,",
+          "confidence": 0.997038
+        },
+        {
+          "text": "incluye",
+          "confidence": 0.999964
+        },
+        {
+          "text": "un",
+          "confidence": 0.999988
+        },
+        {
+          "text": "viaje",
+          "confidence": 0.999992
+        },
+        {
+          "text": "por",
+          "confidence": 0.961585
+        },
+        {
+          "text": "él",
+          "confidence": 0.811733
+        },
+        {
+          "text": "en",
+          "confidence": 0.993625
+        },
+        {
+          "text": "un",
+          "confidence": 0.999991
+        },
+        {
+          "text": "barco",
+          "confidence": 0.999997
+        },
+        {
+          "text": "por",
+          "confidence": 0.999973
+        },
+        {
+          "text": "el",
+          "confidence": 0.999991
+        },
+        {
+          "text": "río",
+          "confidence": 0.997729
+        },
+        {
+          "text": "Sena.",
+          "confidence": 0.999264
+        }
+      ],
+      "languageCode": "es",
+      "languageConfidence": 0.963475,
+      "midTurnSwitch": false,
+      "audioStartMs": 32832,
+      "audioEndMs": 41363,
+      "sttMs": 351
+    },
+    {
+      "type": "turn.accuracy",
+      "at": 41714,
+      "order": 5,
+      "keytermsHit": [],
+      "session": {
+        "wer": 0.4444444444444444,
+        "errors": 64,
+        "words": 144
+      }
+    },
+    {
+      "type": "meter",
+      "at": 42305,
+      "connectionMs": 42305,
+      "audioMs": 42000
+    },
+    {
+      "type": "turn.partial",
+      "at": 42610,
+      "order": 6,
+      "transcript": "Y como"
+    },
+    {
+      "type": "meter",
+      "at": 43307,
+      "connectionMs": 43307,
+      "audioMs": 43001
+    },
+    {
+      "type": "turn.partial",
+      "at": 43711,
+      "order": 6,
+      "transcript": "Y con un almuerzo, y allí"
+    },
+    {
+      "type": "meter",
+      "at": 44308,
+      "connectionMs": 44308,
+      "audioMs": 44000
+    },
+    {
+      "type": "turn.partial",
+      "at": 44910,
+      "order": 6,
+      "transcript": "Y con un almuerzo, y allí se ve la Torre Eiffel."
+    },
+    {
+      "type": "meter",
+      "at": 45308,
+      "connectionMs": 45308,
+      "audioMs": 45001
+    },
+    {
+      "type": "turn.final",
+      "at": 45913,
+      "order": 6,
+      "transcript": "Y con un almuerzo, y allí se ve la Torre Eiffel.",
+      "words": [
+        {
+          "text": "Y",
+          "confidence": 0.832298
+        },
+        {
+          "text": "con",
+          "confidence": 0.997809
+        },
+        {
+          "text": "un",
+          "confidence": 0.999928
+        },
+        {
+          "text": "almuerzo,",
+          "confidence": 0.908307
+        },
+        {
+          "text": "y",
+          "confidence": 0.999823
+        },
+        {
+          "text": "allí",
+          "confidence": 0.997456
+        },
+        {
+          "text": "se",
+          "confidence": 0.999986
+        },
+        {
+          "text": "ve",
+          "confidence": 0.999988
+        },
+        {
+          "text": "la",
+          "confidence": 0.999861
+        },
+        {
+          "text": "Torre",
+          "confidence": 0.998882
+        },
+        {
+          "text": "Eiffel.",
+          "confidence": 0.988841
+        }
+      ],
+      "languageCode": "es",
+      "languageConfidence": 0.885588,
+      "midTurnSwitch": true,
+      "audioStartMs": 41504,
+      "audioEndMs": 45589,
+      "sttMs": 324
+    },
+    {
+      "type": "turn.accuracy",
+      "at": 45913,
+      "order": 6,
+      "keytermsHit": [
+        "Torre Eiffel"
+      ],
+      "session": {
+        "wer": 0.24369747899159663,
+        "errors": 29,
+        "words": 119
+      }
+    },
+    {
+      "type": "meter",
+      "at": 46309,
+      "connectionMs": 46309,
+      "audioMs": 46002
+    },
+    {
+      "type": "turn.partial",
+      "at": 46810,
+      "order": 7,
+      "transcript": "Se ve..."
+    },
+    {
+      "type": "meter",
+      "at": 47311,
+      "connectionMs": 47311,
+      "audioMs": 47001
+    },
+    {
+      "type": "turn.partial",
+      "at": 48011,
+      "order": 7,
+      "transcript": "Se ve la Notre Dame Church."
+    },
+    {
+      "type": "meter",
+      "at": 48311,
+      "connectionMs": 48311,
+      "audioMs": 48001
+    },
+    {
+      "type": "turn.final",
+      "at": 48607,
+      "order": 7,
+      "transcript": "Se ve la Notre Dame Church.",
+      "words": [
+        {
+          "text": "Se",
+          "confidence": 0.840539
+        },
+        {
+          "text": "ve",
+          "confidence": 0.998693
+        },
+        {
+          "text": "la",
+          "confidence": 0.992363
+        },
+        {
+          "text": "Notre",
+          "confidence": 0.999728
+        },
+        {
+          "text": "Dame",
+          "confidence": 0.981976
+        },
+        {
+          "text": "Church.",
+          "confidence": 0.927389
+        }
+      ],
+      "languageCode": "fr",
+      "languageConfidence": 0.271559,
+      "midTurnSwitch": true,
+      "audioStartMs": 45728,
+      "audioEndMs": 48284,
+      "sttMs": 323
+    },
+    {
+      "type": "turn.accuracy",
+      "at": 48607,
+      "order": 7,
+      "keytermsHit": [
+        "Notre Dame"
+      ],
+      "session": {
+        "wer": 0.232,
+        "errors": 29,
+        "words": 125
+      }
+    },
+    {
+      "type": "meter",
+      "at": 49312,
+      "connectionMs": 49312,
+      "audioMs": 49001
+    },
+    {
+      "type": "turn.partial",
+      "at": 49513,
+      "order": 8,
+      "transcript": "Vemos el Arco"
+    },
+    {
+      "type": "meter",
+      "at": 50313,
+      "connectionMs": 50313,
+      "audioMs": 50003
+    },
+    {
+      "type": "turn.partial",
+      "at": 50907,
+      "order": 8,
+      "transcript": "Vemos el Arco del Triunfo."
+    },
+    {
+      "type": "meter",
+      "at": 51314,
+      "connectionMs": 51314,
+      "audioMs": 51001
+    },
+    {
+      "type": "turn.partial",
+      "at": 52010,
+      "order": 8,
+      "transcript": "Vemos el Arco del Triunfo, como"
+    },
+    {
+      "type": "meter",
+      "at": 52314,
+      "connectionMs": 52314,
+      "audioMs": 52001
+    },
+    {
+      "type": "turn.partial",
+      "at": 53312,
+      "order": 8,
+      "transcript": "Vemos el Arco del Triunfo. ¿Cómo se llama el museo?"
+    },
+    {
+      "type": "meter",
+      "at": 53314,
+      "connectionMs": 53314,
+      "audioMs": 53001
+    },
+    {
+      "type": "meter",
+      "at": 54316,
+      "connectionMs": 54316,
+      "audioMs": 54000
+    },
+    {
+      "type": "turn.final",
+      "at": 54509,
+      "order": 8,
+      "transcript": "Vemos el Arco del Triunfo. ¿Cómo se llama el museo este importante?",
+      "words": [
+        {
+          "text": "Vemos",
+          "confidence": 0.9813
+        },
+        {
+          "text": "el",
+          "confidence": 0.999697
+        },
+        {
+          "text": "Arco",
+          "confidence": 0.999195
+        },
+        {
+          "text": "del",
+          "confidence": 0.999349
+        },
+        {
+          "text": "Triunfo.",
+          "confidence": 0.888095
+        },
+        {
+          "text": "¿Cómo",
+          "confidence": 0.976499
+        },
+        {
+          "text": "se",
+          "confidence": 0.999957
+        },
+        {
+          "text": "llama",
+          "confidence": 0.999963
+        },
+        {
+          "text": "el",
+          "confidence": 0.999429
+        },
+        {
+          "text": "museo",
+          "confidence": 0.999923
+        },
+        {
+          "text": "este",
+          "confidence": 0.994554
+        },
+        {
+          "text": "importante?",
+          "confidence": 0.999167
+        }
+      ],
+      "languageCode": "es",
+      "languageConfidence": 0.900398,
+      "midTurnSwitch": false,
+      "audioStartMs": 48416,
+      "audioEndMs": 54157,
+      "sttMs": 352
+    },
+    {
+      "type": "turn.accuracy",
+      "at": 54509,
+      "order": 8,
+      "keytermsHit": [
+        "Arco del Triunfo"
+      ],
+      "session": {
+        "wer": 0.23357664233576642,
+        "errors": 32,
+        "words": 137
+      }
+    },
+    {
+      "type": "meter",
+      "at": 55317,
+      "connectionMs": 55317,
+      "audioMs": 55001
+    },
+    {
+      "type": "turn.partial",
+      "at": 55407,
+      "order": 9,
+      "transcript": "The Guggenheim."
+    },
+    {
+      "type": "meter",
+      "at": 56318,
+      "connectionMs": 56318,
+      "audioMs": 55701
+    },
+    {
+      "type": "meter",
+      "at": 57319,
+      "connectionMs": 57319,
+      "audioMs": 55701
+    },
+    {
+      "type": "turn.final",
+      "at": 58084,
+      "order": 9,
+      "transcript": "The Louvre.",
+      "words": [
+        {
+          "text": "The",
+          "confidence": 0.402406
+        },
+        {
+          "text": "Louvre.",
+          "confidence": 0.849916
+        }
+      ],
+      "languageCode": "fr",
+      "languageConfidence": 0.493166,
+      "midTurnSwitch": true,
+      "audioStartMs": 54304,
+      "audioEndMs": 55799,
+      "sttMs": 2285
+    },
+    {
+      "type": "turn.accuracy",
+      "at": 58084,
+      "order": 9,
+      "keytermsHit": [
+        "Louvre"
+      ],
+      "session": {
+        "wer": 0.2517482517482518,
+        "errors": 36,
+        "words": 143
+      }
+    },
+    {
+      "type": "meter",
+      "at": 58320,
+      "connectionMs": 58320,
+      "audioMs": 55701
+    },
+    {
+      "type": "session.accuracy",
+      "at": 58537,
+      "reference": "the cruise. the no no. cruise ship. cómo se llama? el el naviero. el barco el barco el barco. el barco yes. entonces el barco la primer día sale por la tarde como a las cinco de la tarde. y cruza el canal y llega a Francia. entonces the English channel? yeah the English channel. y cruza. y vamos entonces a Francia. entonces en Francia compramos un ticket abuelo y yo. que el tour demora como diez horas y media. y nos van a llevar desde el puerto hasta Paris. entonces tenemos en en ese día incluye un viaje por el en un barco por el río Seine y con un almuerzo. y ahí se ve la Torre Eiffel. se ve la Notre Dame church. vemos el Arco Triunfo. y cómo se llama el museo este importante? the Guggenburgh? el Louvre el Louvre. no.",
+      "wer": 0.2569444444444444,
+      "ops": [
+        {
+          "kind": "del",
+          "ref": "the"
+        },
+        {
+          "kind": "sub",
+          "ref": "cruise",
+          "hyp": "A"
+        },
+        {
+          "kind": "sub",
+          "ref": "the",
+          "hyp": "boat"
+        },
+        {
+          "kind": "ok",
+          "ref": "no",
+          "hyp": "No"
+        },
+        {
+          "kind": "ok",
+          "ref": "no",
+          "hyp": "no"
+        },
+        {
+          "kind": "del",
+          "ref": "cruise"
+        },
+        {
+          "kind": "del",
+          "ref": "ship"
+        },
+        {
+          "kind": "sub",
+          "ref": "cómo",
+          "hyp": "Oh"
+        },
+        {
+          "kind": "ok",
+          "ref": "se",
+          "hyp": "se"
+        },
+        {
+          "kind": "ok",
+          "ref": "llama",
+          "hyp": "llama"
+        },
+        {
+          "kind": "del",
+          "ref": "el"
+        },
+        {
+          "kind": "ok",
+          "ref": "el",
+          "hyp": "el"
+        },
+        {
+          "kind": "ok",
+          "ref": "naviero",
+          "hyp": "Naviero"
+        },
+        {
+          "kind": "del",
+          "ref": "el"
+        },
+        {
+          "kind": "del",
+          "ref": "barco"
+        },
+        {
+          "kind": "ok",
+          "ref": "el",
+          "hyp": "El"
+        },
+        {
+          "kind": "ok",
+          "ref": "barco",
+          "hyp": "barco"
+        },
+        {
+          "kind": "ok",
+          "ref": "el",
+          "hyp": "el"
+        },
+        {
+          "kind": "ok",
+          "ref": "barco",
+          "hyp": "barco"
+        },
+        {
+          "kind": "ok",
+          "ref": "el",
+          "hyp": "el"
+        },
+        {
+          "kind": "ok",
+          "ref": "barco",
+          "hyp": "barco"
+        },
+        {
+          "kind": "del",
+          "ref": "yes"
+        },
+        {
+          "kind": "ok",
+          "ref": "entonces",
+          "hyp": "Entonces"
+        },
+        {
+          "kind": "ok",
+          "ref": "el",
+          "hyp": "el"
+        },
+        {
+          "kind": "ok",
+          "ref": "barco",
+          "hyp": "barco"
+        },
+        {
+          "kind": "sub",
+          "ref": "la",
+          "hyp": "el"
+        },
+        {
+          "kind": "ok",
+          "ref": "primer",
+          "hyp": "primer"
+        },
+        {
+          "kind": "ok",
+          "ref": "día",
+          "hyp": "día"
+        },
+        {
+          "kind": "ok",
+          "ref": "sale",
+          "hyp": "sale"
+        },
+        {
+          "kind": "ok",
+          "ref": "por",
+          "hyp": "por"
+        },
+        {
+          "kind": "ok",
+          "ref": "la",
+          "hyp": "la"
+        },
+        {
+          "kind": "ok",
+          "ref": "tarde",
+          "hyp": "tarde"
+        },
+        {
+          "kind": "ok",
+          "ref": "como",
+          "hyp": "como"
+        },
+        {
+          "kind": "ok",
+          "ref": "a",
+          "hyp": "a"
+        },
+        {
+          "kind": "ok",
+          "ref": "las",
+          "hyp": "las"
+        },
+        {
+          "kind": "sub",
+          "ref": "cinco",
+          "hyp": "5"
+        },
+        {
+          "kind": "ok",
+          "ref": "de",
+          "hyp": "de"
+        },
+        {
+          "kind": "ok",
+          "ref": "la",
+          "hyp": "la"
+        },
+        {
+          "kind": "ok",
+          "ref": "tarde",
+          "hyp": "tarde"
+        },
+        {
+          "kind": "ok",
+          "ref": "y",
+          "hyp": "y"
+        },
+        {
+          "kind": "ok",
+          "ref": "cruza",
+          "hyp": "cruza"
+        },
+        {
+          "kind": "ok",
+          "ref": "el",
+          "hyp": "el"
+        },
+        {
+          "kind": "ok",
+          "ref": "canal",
+          "hyp": "canal"
+        },
+        {
+          "kind": "ok",
+          "ref": "y",
+          "hyp": "y"
+        },
+        {
+          "kind": "ok",
+          "ref": "llega",
+          "hyp": "llega"
+        },
+        {
+          "kind": "ok",
+          "ref": "a",
+          "hyp": "a"
+        },
+        {
+          "kind": "ok",
+          "ref": "Francia",
+          "hyp": "Francia"
+        },
+        {
+          "kind": "ok",
+          "ref": "entonces",
+          "hyp": "Entonces"
+        },
+        {
+          "kind": "del",
+          "ref": "the"
+        },
+        {
+          "kind": "del",
+          "ref": "English"
+        },
+        {
+          "kind": "del",
+          "ref": "channel"
+        },
+        {
+          "kind": "del",
+          "ref": "yeah"
+        },
+        {
+          "kind": "del",
+          "ref": "the"
+        },
+        {
+          "kind": "del",
+          "ref": "English"
+        },
+        {
+          "kind": "del",
+          "ref": "channel"
+        },
+        {
+          "kind": "ok",
+          "ref": "y",
+          "hyp": "y"
+        },
+        {
+          "kind": "ok",
+          "ref": "cruza",
+          "hyp": "cruza"
+        },
+        {
+          "kind": "ok",
+          "ref": "y",
+          "hyp": "y"
+        },
+        {
+          "kind": "ok",
+          "ref": "vamos",
+          "hyp": "vamos"
+        },
+        {
+          "kind": "ok",
+          "ref": "entonces",
+          "hyp": "entonces"
+        },
+        {
+          "kind": "ok",
+          "ref": "a",
+          "hyp": "a"
+        },
+        {
+          "kind": "ok",
+          "ref": "Francia",
+          "hyp": "Francia"
+        },
+        {
+          "kind": "ok",
+          "ref": "entonces",
+          "hyp": "Entonces"
+        },
+        {
+          "kind": "ok",
+          "ref": "en",
+          "hyp": "en"
+        },
+        {
+          "kind": "ok",
+          "ref": "Francia",
+          "hyp": "Francia"
+        },
+        {
+          "kind": "ok",
+          "ref": "compramos",
+          "hyp": "compramos"
+        },
+        {
+          "kind": "ok",
+          "ref": "un",
+          "hyp": "un"
+        },
+        {
+          "kind": "del",
+          "ref": "ticket"
+        },
+        {
+          "kind": "sub",
+          "ref": "abuelo",
+          "hyp": "tiquete"
+        },
+        {
+          "kind": "sub",
+          "ref": "y",
+          "hyp": "vuelo"
+        },
+        {
+          "kind": "ok",
+          "ref": "yo",
+          "hyp": "yo"
+        },
+        {
+          "kind": "ok",
+          "ref": "que",
+          "hyp": "que"
+        },
+        {
+          "kind": "ok",
+          "ref": "el",
+          "hyp": "el"
+        },
+        {
+          "kind": "ok",
+          "ref": "tour",
+          "hyp": "tour"
+        },
+        {
+          "kind": "ok",
+          "ref": "demora",
+          "hyp": "demora"
+        },
+        {
+          "kind": "ok",
+          "ref": "como",
+          "hyp": "como"
+        },
+        {
+          "kind": "sub",
+          "ref": "diez",
+          "hyp": "10"
+        },
+        {
+          "kind": "ok",
+          "ref": "horas",
+          "hyp": "horas"
+        },
+        {
+          "kind": "ok",
+          "ref": "y",
+          "hyp": "y"
+        },
+        {
+          "kind": "ok",
+          "ref": "media",
+          "hyp": "media"
+        },
+        {
+          "kind": "ok",
+          "ref": "y",
+          "hyp": "Y"
+        },
+        {
+          "kind": "ok",
+          "ref": "nos",
+          "hyp": "nos"
+        },
+        {
+          "kind": "ok",
+          "ref": "van",
+          "hyp": "van"
+        },
+        {
+          "kind": "ok",
+          "ref": "a",
+          "hyp": "a"
+        },
+        {
+          "kind": "ok",
+          "ref": "llevar",
+          "hyp": "llevar"
+        },
+        {
+          "kind": "ok",
+          "ref": "desde",
+          "hyp": "desde"
+        },
+        {
+          "kind": "ok",
+          "ref": "el",
+          "hyp": "el"
+        },
+        {
+          "kind": "ok",
+          "ref": "puerto",
+          "hyp": "puerto"
+        },
+        {
+          "kind": "ok",
+          "ref": "hasta",
+          "hyp": "hasta"
+        },
+        {
+          "kind": "sub",
+          "ref": "Paris",
+          "hyp": "París"
+        },
+        {
+          "kind": "ok",
+          "ref": "entonces",
+          "hyp": "Entonces"
+        },
+        {
+          "kind": "ok",
+          "ref": "tenemos",
+          "hyp": "tenemos"
+        },
+        {
+          "kind": "del",
+          "ref": "en"
+        },
+        {
+          "kind": "ok",
+          "ref": "en",
+          "hyp": "en"
+        },
+        {
+          "kind": "ok",
+          "ref": "ese",
+          "hyp": "ese"
+        },
+        {
+          "kind": "sub",
+          "ref": "día",
+          "hyp": "viaje"
+        },
+        {
+          "kind": "ok",
+          "ref": "incluye",
+          "hyp": "incluye"
+        },
+        {
+          "kind": "ok",
+          "ref": "un",
+          "hyp": "un"
+        },
+        {
+          "kind": "ok",
+          "ref": "viaje",
+          "hyp": "viaje"
+        },
+        {
+          "kind": "ok",
+          "ref": "por",
+          "hyp": "por"
+        },
+        {
+          "kind": "sub",
+          "ref": "el",
+          "hyp": "él"
+        },
+        {
+          "kind": "ok",
+          "ref": "en",
+          "hyp": "en"
+        },
+        {
+          "kind": "ok",
+          "ref": "un",
+          "hyp": "un"
+        },
+        {
+          "kind": "ok",
+          "ref": "barco",
+          "hyp": "barco"
+        },
+        {
+          "kind": "ok",
+          "ref": "por",
+          "hyp": "por"
+        },
+        {
+          "kind": "ok",
+          "ref": "el",
+          "hyp": "el"
+        },
+        {
+          "kind": "ok",
+          "ref": "río",
+          "hyp": "río"
+        },
+        {
+          "kind": "sub",
+          "ref": "Seine",
+          "hyp": "Sena"
+        },
+        {
+          "kind": "ok",
+          "ref": "y",
+          "hyp": "Y"
+        },
+        {
+          "kind": "ok",
+          "ref": "con",
+          "hyp": "con"
+        },
+        {
+          "kind": "ok",
+          "ref": "un",
+          "hyp": "un"
+        },
+        {
+          "kind": "ok",
+          "ref": "almuerzo",
+          "hyp": "almuerzo"
+        },
+        {
+          "kind": "ok",
+          "ref": "y",
+          "hyp": "y"
+        },
+        {
+          "kind": "sub",
+          "ref": "ahí",
+          "hyp": "allí"
+        },
+        {
+          "kind": "ok",
+          "ref": "se",
+          "hyp": "se"
+        },
+        {
+          "kind": "ok",
+          "ref": "ve",
+          "hyp": "ve"
+        },
+        {
+          "kind": "ok",
+          "ref": "la",
+          "hyp": "la"
+        },
+        {
+          "kind": "ok",
+          "ref": "Torre",
+          "hyp": "Torre"
+        },
+        {
+          "kind": "ok",
+          "ref": "Eiffel",
+          "hyp": "Eiffel"
+        },
+        {
+          "kind": "ok",
+          "ref": "se",
+          "hyp": "Se"
+        },
+        {
+          "kind": "ok",
+          "ref": "ve",
+          "hyp": "ve"
+        },
+        {
+          "kind": "ok",
+          "ref": "la",
+          "hyp": "la"
+        },
+        {
+          "kind": "ok",
+          "ref": "Notre",
+          "hyp": "Notre"
+        },
+        {
+          "kind": "ok",
+          "ref": "Dame",
+          "hyp": "Dame"
+        },
+        {
+          "kind": "ok",
+          "ref": "church",
+          "hyp": "Church"
+        },
+        {
+          "kind": "ok",
+          "ref": "vemos",
+          "hyp": "Vemos"
+        },
+        {
+          "kind": "ok",
+          "ref": "el",
+          "hyp": "el"
+        },
+        {
+          "kind": "ok",
+          "ref": "Arco",
+          "hyp": "Arco"
+        },
+        {
+          "kind": "sub",
+          "ref": "Triunfo",
+          "hyp": "del"
+        },
+        {
+          "kind": "sub",
+          "ref": "y",
+          "hyp": "Triunfo"
+        },
+        {
+          "kind": "sub",
+          "ref": "cómo",
+          "hyp": "¿Cómo"
+        },
+        {
+          "kind": "ok",
+          "ref": "se",
+          "hyp": "se"
+        },
+        {
+          "kind": "ok",
+          "ref": "llama",
+          "hyp": "llama"
+        },
+        {
+          "kind": "ok",
+          "ref": "el",
+          "hyp": "el"
+        },
+        {
+          "kind": "ok",
+          "ref": "museo",
+          "hyp": "museo"
+        },
+        {
+          "kind": "ok",
+          "ref": "este",
+          "hyp": "este"
+        },
+        {
+          "kind": "ok",
+          "ref": "importante",
+          "hyp": "importante"
+        },
+        {
+          "kind": "ok",
+          "ref": "the",
+          "hyp": "The"
+        },
+        {
+          "kind": "del",
+          "ref": "Guggenburgh"
+        },
+        {
+          "kind": "del",
+          "ref": "el"
+        },
+        {
+          "kind": "del",
+          "ref": "Louvre"
+        },
+        {
+          "kind": "del",
+          "ref": "el"
+        },
+        {
+          "kind": "ok",
+          "ref": "Louvre",
+          "hyp": "Louvre"
+        },
+        {
+          "kind": "del",
+          "ref": "no"
+        }
+      ]
+    },
+    {
+      "type": "session.close",
+      "at": 58537,
+      "audioDurationSeconds": 56,
+      "sessionDurationSeconds": 58
+    }
+  ]
+}

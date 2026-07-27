@@ -22,13 +22,17 @@ HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 WORK="$(mktemp -d)"
 trap 'rm -rf "$WORK"' EXIT
 
-AUDIO_URL="http://bangortalk.bangor.ac.uk/herring1.mp3"
+AUDIO_URL="http://bangortalk.bangor.ac.uk/sastre8.mp3"
 CHAT_URL="https://bangortalk.org.uk/downloads/miami_chats.tar.gz"
 
-# The window used by the demo, in milliseconds into herring1. These are the corpus's own
-# timings for utterances 262-292; build_fixture.py reads the same numbers.
-START_MS=408503
-END_MS=453296
+# The window used by the demo, in milliseconds into sastre8. These are the corpus's own
+# timings for utterances 849-874; build_reference.py reads the same numbers.
+#
+# A family talking about a cruise to France and a day in Paris, switching between Spanish
+# and English throughout, with landmark names a recogniser has to get right. Chosen after
+# an earlier clip failed live -- see ../fixtures/MEASUREMENTS.md.
+START_MS=1538922
+END_MS=1594655
 
 need() {
   command -v "$1" >/dev/null 2>&1 || { echo "error: $1 is required" >&2; exit 1; }
@@ -46,30 +50,30 @@ else
   exit 1
 fi
 
-echo "==> downloading audio (~23 MB)"
-curl -fL --progress-bar "$AUDIO_URL" -o "$WORK/herring1.mp3"
+echo "==> downloading audio (~24 MB)"
+curl -fL --progress-bar "$AUDIO_URL" -o "$WORK/source.mp3"
 
 echo "==> downloading transcripts"
 curl -fL --progress-bar "$CHAT_URL" -o "$WORK/miami_chats.tar.gz"
 tar xzf "$WORK/miami_chats.tar.gz" -C "$WORK"
 
-CHA="$WORK/miami/herring1.cha"
-[ -f "$CHA" ] || { echo "error: herring1.cha not found in the archive" >&2; exit 1; }
+CHA="$WORK/miami/sastre8.cha"
+[ -f "$CHA" ] || { echo "error: sastre8.cha not found in the archive" >&2; exit 1; }
 
 # 16 kHz mono signed 16-bit PCM: what the handheld's microphone path produces, and what
 # the streaming session is configured for (encoding=pcm_s16le, sample_rate=16000).
 echo "==> decoding with $CONVERTER"
 if [ "$CONVERTER" = ffmpeg ]; then
-  ffmpeg -hide_banner -loglevel error -y -i "$WORK/herring1.mp3" \
+  ffmpeg -hide_banner -loglevel error -y -i "$WORK/source.mp3" \
     -ac 1 -ar 16000 -c:a pcm_s16le "$WORK/full.wav"
 else
-  afconvert -f WAVE -d LEI16@16000 -c 1 "$WORK/herring1.mp3" "$WORK/full.wav"
+  afconvert -f WAVE -d LEI16@16000 -c 1 "$WORK/source.mp3" "$WORK/full.wav"
 fi
 
 # Trimming happens here rather than in the decoder so it works identically under either
 # converter, and needs nothing beyond the Python standard library.
 echo "==> cutting ${START_MS}ms-${END_MS}ms"
-python3 - "$WORK/full.wav" "$HERE/herring1.wav" "$START_MS" "$END_MS" <<'PY'
+python3 - "$WORK/full.wav" "$HERE/paris.wav" "$START_MS" "$END_MS" <<'PY'
 import sys, wave
 
 source_path, target_path, start_ms, end_ms = sys.argv[1], sys.argv[2], int(sys.argv[3]), int(sys.argv[4])
@@ -93,16 +97,15 @@ print(f"    {len(pcm) / (rate * params.sampwidth * params.nchannels):.1f}s, "
       f"{params.sampwidth * 8}-bit")
 PY
 
-echo "==> rebuilding the fixture from the same transcript"
-python3 "$HERE/../fixtures/build_fixture.py" "$CHA"
+echo "==> building the reference transcript from the same file"
+python3 "$HERE/../fixtures/build_reference.py" "$CHA"
 
 cat <<EOF
 
 Done.
 
-  audio      demo/audio/herring1.wav
-  fixture    demo/fixtures/herring1-excerpt.json
-  reference  demo/fixtures/reference.txt
+  audio      demo/audio/paris.wav
+  reference  demo/fixtures/reference.txt  (+ reference.json)
 
 Source: Bangor Miami corpus, Deuchar, M. et al., ESRC Centre for Research on
 Bilingualism, Bangor University. Distributed under GPL-3 with the TalkBank code of
@@ -110,9 +113,11 @@ ethics. Please cite the corpus if you use this beyond running the demo.
 
   https://bangortalk.org.uk/  ·  https://talkbank.org/biling/access/Bangor/Miami.html
 
-Start the server with an API key set to run a live session:
+The demo already ships a recorded real session, so `npm start` works as-is. With a key
+you can record a fresh one:
 
-  export ASSEMBLYAI_API_KEY=...
+  export ASSEMBLYAI_API_KEY=...   # or put it in demo/.env
+  npm run capture                 # records into fixtures/session.json
   npm start
 
 EOF

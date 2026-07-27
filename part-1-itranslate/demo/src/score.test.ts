@@ -115,6 +115,36 @@ test("ops carry the original spelling, not the comparison form", () => {
   assert.equal(deleted?.ref, "Lauderdale", "the dropped word keeps its capital");
 });
 
+test("ops account for every reference word exactly once", () => {
+  // The invariant that matters for the dashboard: every op except an insertion consumes
+  // exactly one reference word, so the ops partition the reference. Violating this is
+  // what made an earlier version report 47% on a session that measured 25% -- the diff
+  // was double-counting words.
+  const cases: Array<[string, string]> = [
+    ["the cruise ship", "a boat no no"],
+    ["el barco el barco el barco", "El barco, el barco."],
+    ["y ahí se ve la Torre Eiffel", "Y allí se ve la Torre Eiffel."],
+    ["short", "a much longer hypothesis than the reference"],
+    ["a much longer reference than the hypothesis here", "short"],
+  ];
+  for (const [reference, hypothesis] of cases) {
+    const result = score(reference, hypothesis);
+    const covered = result.ops.filter((op) => op.kind !== "ins").length;
+    assert.equal(covered, result.referenceWords,
+      `ops cover ${covered} words but the reference has ${result.referenceWords}: "${reference}"`);
+    const consumed = result.ops.filter((op) => op.kind !== "del").length;
+    assert.equal(consumed, tokenize(hypothesis).length,
+      `ops consume ${consumed} hypothesis words but there are ${tokenize(hypothesis).length}`);
+  }
+});
+
+test("scorePrefix keeps the same invariant on its retained region", () => {
+  const result = scorePrefix("they have Chicago from Fort Lauderdale", "they have Chicago");
+  const covered = result.ops.filter((op) => op.kind !== "ins").length;
+  assert.equal(covered, result.referenceWords);
+  assert.equal(covered, 3, "only the delivered region is scored");
+});
+
 test("keyterm matching handles multi-word terms", () => {
   const terms = ["Fort Lauderdale", "Kingston", "Nicaragua"];
   assert.deepEqual(

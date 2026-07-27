@@ -4,6 +4,10 @@
  * Live sessions and the no-key fixture replay emit exactly the same events, so the
  * dashboard has one code path and the fixture cannot drift into showing something the
  * real pipeline could never produce.
+ *
+ * Scope: recognition only. iTranslate asked about speech-to-text accuracy, and they
+ * already own the translation and text-to-speech legs of their pipeline, so neither
+ * appears here.
  */
 
 export interface Word {
@@ -50,22 +54,28 @@ export type DashboardEvent =
       sttMs: number;
     }
   | {
-      type: "turn.translation";
-      at: number;
-      order: number;
-      target: string;
-      text: string;
-      translateMs: number;
-    }
-  | { type: "turn.speech"; at: number; order: number; ttsMs: number }
-  | {
       type: "turn.accuracy";
       at: number;
       order: number;
-      reference: string;
-      /** null when the turn is unscorable, e.g. the corpus marks it unintelligible. */
-      wer: number | null;
+      /** Keyterms this turn got right. Per-turn and unambiguous. */
       keytermsHit: string[];
+      /**
+       * The running session total.
+       *
+       * There is deliberately no per-turn word error rate. Turn boundaries do not line
+       * up with the reference's sentence boundaries, so accuracy can only be scored
+       * against a global alignment -- and slicing that alignment back into per-turn
+       * pieces double-counts, because an earlier turn's alignment shifts as more of the
+       * hypothesis arrives. One honest number beats ten misleading ones.
+       */
+      session: { wer: number; errors: number; words: number };
+    }
+  | {
+      /** The one word-level diff, over the whole session, emitted when it ends. */
+      type: "session.accuracy";
+      at: number;
+      reference: string;
+      wer: number;
       ops: DiffOp[];
     }
   | { type: "meter"; at: number; connectionMs: number; audioMs: number }
