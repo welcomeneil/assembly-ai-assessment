@@ -1,0 +1,902 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>iTranslate · live speech-to-text</title>
+
+<!--
+  One file. No bundler, no CDN, no web fonts, no framework install.
+
+  A demo shown to a customer should not be able to fail at compile time, or because
+  the venue wifi cannot reach a CDN. It is served by the same process that runs the
+  session, and it is small enough to read in one sitting.
+
+  The dashboard observes and nothing more. It subscribes to events the pipeline
+  publishes, holds no credentials, and never contacts AssemblyAI.
+-->
+
+<style>
+:root {
+  color-scheme: light;
+
+  --surface:        #fcfcfb;
+  --page:           #f9f9f7;
+  --ink:            #0b0b0b;
+  --ink-2:          #52514e;
+  --ink-muted:      #898781;
+  --grid:           #e1e0d9;
+  --baseline:       #c3c2b7;
+  --hairline:       rgba(11, 11, 11, 0.10);
+
+  /* Language identity. Validated categorical slots 1 and 2:
+     CVD ΔE 24.7, normal-vision ΔE 33.6, both ≥ 3:1 on the surface. */
+  --lang-en:        #2a78d6;
+  --lang-es:        #eb6834;
+
+  /* Latency stages. One quantity split in a fixed order, so this is an ordinal
+     ramp in a single hue rather than three categorical hues -- and it stays clear
+     of the language colours so a green segment can never be read as a language. */
+  --stage-stt:      #0d6b4a;
+  --stage-translate:#1a9c6e;
+  --stage-tts:      #3fbd8f;
+
+  --good:           #0ca30c;
+  --warning:        #fab219;
+  --serious:        #ec835a;
+  --critical:       #d03b3b;
+
+  --sans: system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:where(:not([data-theme="light"])) {
+    color-scheme: dark;
+    --surface:        #1a1a19;
+    --page:           #0d0d0d;
+    --ink:            #ffffff;
+    --ink-2:          #c3c2b7;
+    --ink-muted:      #898781;
+    --grid:           #2c2c2a;
+    --baseline:       #383835;
+    --hairline:       rgba(255, 255, 255, 0.10);
+    --lang-en:        #3987e5;
+    --lang-es:        #d95926;
+    --stage-stt:      #12805a;
+    --stage-translate:#22ad7c;
+    --stage-tts:      #4fc79b;
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --surface:        #1a1a19;
+  --page:           #0d0d0d;
+  --ink:            #ffffff;
+  --ink-2:          #c3c2b7;
+  --ink-muted:      #898781;
+  --grid:           #2c2c2a;
+  --baseline:       #383835;
+  --hairline:       rgba(255, 255, 255, 0.10);
+  --lang-en:        #3987e5;
+  --lang-es:        #d95926;
+  --stage-stt:      #12805a;
+  --stage-translate:#22ad7c;
+  --stage-tts:      #4fc79b;
+}
+
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: var(--page);
+  color: var(--ink);
+  font: 15px/1.5 var(--sans);
+  -webkit-font-smoothing: antialiased;
+}
+.wrap { max-width: 1320px; margin: 0 auto; padding: 24px 20px 56px; }
+
+/* ---------- header ---------- */
+
+header { display: flex; flex-wrap: wrap; gap: 16px; align-items: flex-end; justify-content: space-between; margin-bottom: 18px; }
+h1 { font-size: 20px; font-weight: 620; margin: 0 0 4px; letter-spacing: -0.01em; }
+.sub { color: var(--ink-2); font-size: 13.5px; margin: 0; }
+.controls { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+
+button {
+  font: inherit; font-size: 13.5px; font-weight: 550;
+  padding: 8px 14px; border-radius: 8px;
+  border: 1px solid var(--hairline); background: var(--surface); color: var(--ink);
+  cursor: pointer;
+}
+button:hover:not(:disabled) { border-color: var(--baseline); }
+button:disabled { opacity: 0.45; cursor: default; }
+button.primary { background: var(--ink); color: var(--surface); border-color: var(--ink); }
+
+.badge {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-size: 11.5px; font-weight: 640; letter-spacing: 0.06em; text-transform: uppercase;
+  padding: 5px 9px; border-radius: 6px; border: 1px solid var(--hairline); color: var(--ink-2);
+}
+.badge .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--ink-muted); }
+.badge.live .dot { background: var(--good); }
+.badge.fixture .dot { background: var(--warning); }
+
+/* ---------- provenance banner ---------- */
+
+.banner {
+  border: 1px solid var(--hairline); border-left: 3px solid var(--warning);
+  background: var(--surface); border-radius: 8px;
+  padding: 11px 14px; margin-bottom: 18px; font-size: 13px; color: var(--ink-2);
+}
+.banner strong { color: var(--ink); font-weight: 620; }
+.banner.live { border-left-color: var(--good); }
+.banner ul { margin: 6px 0 0; padding-left: 18px; }
+.banner li { margin: 2px 0; }
+
+/* ---------- stat tiles ---------- */
+
+.stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 18px; }
+.tile {
+  background: var(--surface); border: 1px solid var(--hairline); border-radius: 10px;
+  padding: 14px 16px;
+}
+.tile .label { font-size: 12px; color: var(--ink-2); margin-bottom: 6px; }
+.tile .value { font-size: 30px; font-weight: 640; letter-spacing: -0.02em; line-height: 1.1; }
+.tile .value .unit { font-size: 16px; font-weight: 550; color: var(--ink-2); margin-left: 2px; }
+.tile .note { font-size: 12px; color: var(--ink-muted); margin-top: 5px; }
+
+/* ---------- panels ---------- */
+
+.panel {
+  background: var(--surface); border: 1px solid var(--hairline); border-radius: 10px;
+  padding: 16px 18px;
+}
+.panel h2 {
+  font-size: 11.5px; font-weight: 640; letter-spacing: 0.07em; text-transform: uppercase;
+  color: var(--ink-2); margin: 0 0 12px;
+}
+.main { display: grid; grid-template-columns: minmax(0, 1.85fr) minmax(0, 1fr); gap: 12px; margin-bottom: 12px; }
+.lower { display: grid; grid-template-columns: minmax(0, 1.85fr) minmax(0, 1fr); gap: 12px; }
+
+/* ---------- conversation ---------- */
+
+#stream { max-height: 560px; overflow-y: auto; margin: -4px -4px 0; padding: 4px; }
+#stream:empty::after {
+  content: "Press Play to run the session.";
+  display: block; color: var(--ink-muted); font-size: 13.5px; padding: 20px 0;
+}
+
+.turn { padding: 12px 0; border-top: 1px solid var(--grid); }
+.turn:first-child { border-top: 0; }
+.turn.partial { opacity: 0.55; }
+
+.turn-head { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; flex-wrap: wrap; }
+
+.chip {
+  display: inline-flex; align-items: center; gap: 5px;
+  font: 600 11px/1 var(--mono); letter-spacing: 0.04em;
+  padding: 4px 7px; border-radius: 5px;
+  border: 1px solid var(--hairline); color: var(--ink-2);
+}
+.chip .dot { width: 8px; height: 8px; border-radius: 50%; }
+.chip.en .dot { background: var(--lang-en); }
+.chip.es .dot { background: var(--lang-es); }
+.chip .conf { color: var(--ink-muted); font-weight: 500; }
+
+.flag {
+  font: 600 11px/1 var(--sans); letter-spacing: 0.02em;
+  padding: 4px 7px; border-radius: 5px;
+  color: var(--ink); background: color-mix(in srgb, var(--warning) 22%, transparent);
+  border: 1px solid color-mix(in srgb, var(--warning) 55%, transparent);
+}
+.turn-num { font: 500 11px var(--mono); color: var(--ink-muted); margin-left: auto; }
+
+.hyp { font-size: 15px; line-height: 1.55; }
+.ref {
+  font-size: 12.5px; color: var(--ink-muted); margin-top: 4px;
+  padding-left: 10px; border-left: 2px solid var(--grid);
+}
+.ref b { font-weight: 500; color: var(--ink-2); }
+
+/* Word-level diff. Colour is never the only signal -- each error type also carries a
+   distinct text decoration, so it survives greyscale and colour-vision deficiency. */
+.w-sub { color: var(--serious); text-decoration: underline; text-decoration-thickness: 2px; text-underline-offset: 3px; }
+.w-ins { color: var(--warning); text-decoration: underline dotted; text-decoration-thickness: 2px; text-underline-offset: 3px; }
+.w-del { color: var(--critical); text-decoration: line-through; text-decoration-thickness: 2px; }
+.w-key { font-weight: 620; box-shadow: 0 2px 0 color-mix(in srgb, var(--good) 60%, transparent); }
+
+.trans { display: flex; gap: 8px; margin-top: 7px; font-size: 14.5px; color: var(--ink-2); }
+.trans .arrow { color: var(--ink-muted); flex: none; }
+
+.turn-foot { display: flex; align-items: center; gap: 10px; margin-top: 8px; }
+.microbar { display: flex; height: 7px; border-radius: 4px; overflow: hidden; flex: 1; max-width: 260px; background: var(--grid); gap: 2px; }
+.microbar span { display: block; height: 100%; }
+.microbar .s1 { background: var(--stage-stt); }
+.microbar .s2 { background: var(--stage-translate); }
+.microbar .s3 { background: var(--stage-tts); }
+.turn-foot .total { font: 500 12px var(--mono); color: var(--ink-2); font-variant-numeric: tabular-nums; }
+.turn-foot .wer { font: 500 12px var(--mono); color: var(--ink-muted); font-variant-numeric: tabular-nums; }
+
+/* ---------- device panel ---------- */
+
+.kv { font: 12.5px/1.6 var(--mono); }
+.kv div { display: flex; gap: 8px; padding: 3px 0; border-bottom: 1px solid var(--grid); }
+.kv div:last-child { border-bottom: 0; }
+.kv .k { color: var(--ink-muted); flex: none; }
+.kv .v { color: var(--ink); word-break: break-word; }
+.kv .v.on { color: var(--good); font-weight: 600; }
+
+.prompt-box {
+  font-size: 13px; line-height: 1.55; color: var(--ink-2);
+  background: var(--page); border: 1px solid var(--grid); border-radius: 7px;
+  padding: 10px 12px; margin-top: 6px;
+}
+.terms { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 6px; }
+.term {
+  font: 500 11.5px var(--mono); padding: 3px 7px; border-radius: 5px;
+  border: 1px solid var(--grid); color: var(--ink-2);
+}
+.term.hit { border-color: color-mix(in srgb, var(--good) 55%, transparent); color: var(--ink); font-weight: 600; }
+.section-label { font-size: 11.5px; font-weight: 640; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-muted); margin: 16px 0 0; }
+
+/* ---------- charts ---------- */
+
+.legend { display: flex; gap: 14px; flex-wrap: wrap; margin-bottom: 10px; }
+.legend span { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; color: var(--ink-2); }
+.legend i { width: 10px; height: 10px; border-radius: 3px; display: block; }
+
+svg { display: block; width: 100%; overflow: visible; }
+.axis text { font: 10.5px var(--sans); fill: var(--ink-muted); }
+.axis line { stroke: var(--grid); stroke-width: 1; shape-rendering: crispEdges; }
+.axis .base { stroke: var(--baseline); }
+.col rect { cursor: pointer; }
+
+.meter-row { margin-bottom: 14px; }
+.meter-label { display: flex; justify-content: space-between; font-size: 12.5px; color: var(--ink-2); margin-bottom: 5px; }
+.meter-label b { font-weight: 620; color: var(--ink); font-variant-numeric: tabular-nums; }
+.meter { height: 22px; border-radius: 5px; background: var(--grid); overflow: hidden; display: flex; }
+.meter .audio { background: var(--ink-2); height: 100%; }
+.meter .idle { background: color-mix(in srgb, var(--warning) 45%, transparent); height: 100%; }
+.meter-note { font-size: 12px; color: var(--ink-muted); margin-top: 8px; line-height: 1.5; }
+
+#tooltip {
+  position: fixed; pointer-events: none; opacity: 0; transition: opacity .1s;
+  background: var(--ink); color: var(--surface);
+  font: 12px/1.5 var(--sans); padding: 7px 10px; border-radius: 6px;
+  z-index: 50; max-width: 240px;
+}
+#tooltip b { font-variant-numeric: tabular-nums; }
+
+/* ---------- table view ---------- */
+
+details { margin-top: 12px; }
+summary { cursor: pointer; font-size: 13px; color: var(--ink-2); }
+table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 12.5px; }
+th, td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--grid); vertical-align: top; }
+th { font-weight: 620; color: var(--ink-2); font-size: 11.5px; text-transform: uppercase; letter-spacing: 0.05em; }
+td.num { font-variant-numeric: tabular-nums; font-family: var(--mono); white-space: nowrap; }
+.table-scroll { overflow-x: auto; }
+
+footer { margin-top: 22px; font-size: 12px; color: var(--ink-muted); line-height: 1.6; }
+footer a { color: inherit; }
+
+@media (max-width: 1000px) {
+  .main, .lower { grid-template-columns: minmax(0, 1fr); }
+  .stats { grid-template-columns: repeat(2, 1fr); }
+}
+</style>
+</head>
+
+<body>
+<div class="wrap">
+
+<header>
+  <div>
+    <h1>iTranslate &middot; handheld session</h1>
+    <p class="sub" id="config-line">Waiting for a session.</p>
+  </div>
+  <div class="controls">
+    <span class="badge" id="mode-badge"><span class="dot"></span><span id="mode-text">idle</span></span>
+    <span class="badge" id="clock">00:00</span>
+    <button class="primary" id="play">Play session</button>
+    <button id="stop" disabled>Stop</button>
+    <button id="theme" title="Toggle light and dark">Theme</button>
+  </div>
+</header>
+
+<div class="banner" id="banner" hidden></div>
+
+<div class="stats">
+  <div class="tile">
+    <div class="label">Word error rate</div>
+    <div class="value" id="stat-wer">&mdash;</div>
+    <div class="note" id="stat-wer-note">against the corpus transcript</div>
+  </div>
+  <div class="tile">
+    <div class="label">Names recognised</div>
+    <div class="value" id="stat-keyterms">&mdash;</div>
+    <div class="note">from <code>keyterms_prompt</code></div>
+  </div>
+  <div class="tile">
+    <div class="label">Language switches</div>
+    <div class="value" id="stat-switches">&mdash;</div>
+    <div class="note" id="stat-switches-note">nobody pressed a button</div>
+  </div>
+  <div class="tile">
+    <div class="label">Median time to final</div>
+    <div class="value" id="stat-latency">&mdash;</div>
+    <div class="note">end of speech &rarr; final transcript</div>
+  </div>
+</div>
+
+<div class="main">
+  <section class="panel">
+    <h2>Conversation</h2>
+    <div class="legend">
+      <span><i style="background: var(--lang-en)"></i> English detected</span>
+      <span><i style="background: var(--lang-es)"></i> Spanish detected</span>
+      <span><i style="background: var(--serious)"></i> substituted</span>
+      <span><i style="background: var(--critical)"></i> missed</span>
+      <span><i style="background: var(--warning)"></i> inserted</span>
+    </div>
+    <div id="stream"></div>
+  </section>
+
+  <section class="panel">
+    <h2>What the device sent</h2>
+    <div class="kv" id="params"></div>
+
+    <p class="section-label">Prompt &mdash; built by the device</p>
+    <div class="prompt-box" id="prompt">&mdash;</div>
+
+    <p class="section-label">Keyterms</p>
+    <div class="terms" id="keyterms"></div>
+  </section>
+</div>
+
+<div class="lower">
+  <section class="panel">
+    <h2>Where the time goes</h2>
+    <div class="legend">
+      <span><i style="background: var(--stage-stt)"></i> Recognise</span>
+      <span><i style="background: var(--stage-translate)"></i> Translate</span>
+      <span><i style="background: var(--stage-tts)"></i> Speak</span>
+    </div>
+    <svg id="latency" height="180" role="img" aria-label="Per-turn latency, split into recognition, translation and speech"></svg>
+    <details>
+      <summary>Table view</summary>
+      <div class="table-scroll">
+        <table id="latency-table">
+          <thead><tr><th>Turn</th><th>Lang</th><th>Recognise</th><th>Translate</th><th>Speak</th><th>Total</th><th>Transcript</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </details>
+  </section>
+
+  <section class="panel">
+    <h2>Session cost</h2>
+    <div class="meter-row">
+      <div class="meter-label"><span>Connection open &mdash; all of it billed</span><b id="meter-conn">0.0s</b></div>
+      <div class="meter">
+        <div class="audio" id="meter-audio-fill"></div>
+        <div class="idle" id="meter-idle-fill"></div>
+      </div>
+      <div class="legend" style="margin: 8px 0 0">
+        <span><i style="background: var(--ink-2)"></i> audio sent <b id="meter-audio" style="font-variant-numeric: tabular-nums">0.0s</b></span>
+        <span><i style="background: color-mix(in srgb, var(--warning) 45%, transparent)"></i> open but silent <b id="meter-idle" style="font-variant-numeric: tabular-nums">0.0s</b></span>
+      </div>
+    </div>
+    <p class="meter-note">
+      Streaming is billed on how long the connection stays open, not on how much audio
+      goes through it. The amber stretch is the device still connected after the
+      conversation ended, charged at the same rate as speech.
+    </p>
+    <p class="meter-note" id="meter-waste"></p>
+    <p class="meter-note">
+      On a handheld that spends most of its life in a pocket this is the largest cost
+      lever there is &mdash; larger than the choice of model. Worth deciding the hang-up
+      policy before the first bill, not after.
+    </p>
+  </section>
+</div>
+
+<footer id="footer"></footer>
+</div>
+
+<div id="tooltip" role="status" aria-live="polite"></div>
+
+<script>
+"use strict";
+
+// ---------------------------------------------------------------------------
+// State
+// ---------------------------------------------------------------------------
+
+const turns = new Map();      // order -> turn record
+let session = null;           // the session.open event
+let startedAt = 0;
+let clockTimer = null;
+
+const $ = (id) => document.getElementById(id);
+
+// ---------------------------------------------------------------------------
+// Event handling
+// ---------------------------------------------------------------------------
+
+function connect() {
+  const socket = new WebSocket(`ws://${location.host}/events`);
+  socket.onmessage = (message) => handle(JSON.parse(message.data));
+  socket.onclose = () => setTimeout(connect, 1200);
+}
+
+function turnFor(order) {
+  let turn = turns.get(order);
+  if (!turn) {
+    turn = { order, partial: "", final: null, accuracy: null, translation: null, ttsMs: null };
+    turns.set(order, turn);
+  }
+  return turn;
+}
+
+function handle(event) {
+  switch (event.type) {
+    case "session.open":
+      turns.clear();
+      session = event;
+      startedAt = Date.now();
+      renderSession(event);
+      startClock();
+      $("play").disabled = true;
+      $("stop").disabled = false;
+      break;
+
+    case "turn.partial":
+      turnFor(event.order).partial = event.transcript;
+      renderStream();
+      break;
+
+    case "turn.final":
+      Object.assign(turnFor(event.order), { final: event, partial: "" });
+      renderAll();
+      break;
+
+    case "turn.accuracy":
+      turnFor(event.order).accuracy = event;
+      renderAll();
+      break;
+
+    case "turn.translation":
+      turnFor(event.order).translation = event;
+      renderAll();
+      break;
+
+    case "turn.speech":
+      turnFor(event.order).ttsMs = event.ttsMs;
+      renderAll();
+      break;
+
+    case "meter":
+      renderMeter(event.connectionMs, event.audioMs);
+      break;
+
+    case "session.close":
+      renderMeter(event.sessionDurationSeconds * 1000, event.audioDurationSeconds * 1000);
+      stopClock();
+      $("play").disabled = false;
+      $("stop").disabled = true;
+      break;
+
+    case "error":
+      showError(event.message);
+      break;
+  }
+}
+
+function showError(message) {
+  const banner = $("banner");
+  banner.hidden = false;
+  banner.classList.remove("live");
+  banner.innerHTML = `<strong>Error.</strong> ${escapeHtml(message)}`;
+  $("play").disabled = false;
+  $("stop").disabled = true;
+  stopClock();
+}
+
+// ---------------------------------------------------------------------------
+// Rendering
+// ---------------------------------------------------------------------------
+
+function renderAll() {
+  renderStream();
+  renderStats();
+  renderLatency();
+  renderKeyterms();
+}
+
+function renderSession(event) {
+  const params = event.config.params;
+  const badge = $("mode-badge");
+  badge.className = `badge ${event.mode}`;
+  $("mode-text").textContent = event.mode === "live" ? "live" : "simulated";
+
+  $("config-line").textContent =
+    `${params.speech_model} · ${params.language_codes} · detection on · ` +
+    `${params.voice_focus} · ${params.mode} · ${event.config.keyterms.length} keyterms · ${event.audio}`;
+
+  // Every parameter, verbatim. Nothing about the configuration is hidden from the
+  // customer's engineers, who are the ones who actually decide.
+  const shown = [
+    ["speech_model", params.speech_model],
+    ["language_codes", params.language_codes],
+    ["language_detection", params.language_detection],
+    ["voice_focus", params.voice_focus],
+    ["mode", params.mode],
+    ["min_turn_silence", params.min_turn_silence + " ms"],
+    ["encoding", params.encoding],
+    ["sample_rate", params.sample_rate + " Hz"],
+    ["llm_gateway", params.llm_gateway ? "translation in-session" : "off"],
+  ];
+  $("params").innerHTML = shown.map(([key, value]) => {
+    const on = value === "true" || value === "translation in-session";
+    return `<div><span class="k">${key}</span><span class="v${on ? " on" : ""}">${escapeHtml(String(value))}</span></div>`;
+  }).join("");
+
+  $("prompt").textContent = event.config.prompt;
+
+  const banner = $("banner");
+  banner.hidden = false;
+  if (event.mode === "live") {
+    banner.classList.add("live");
+    banner.innerHTML = "<strong>Live session.</strong> Real audio, real API, measured numbers.";
+  } else {
+    banner.classList.remove("live");
+    const p = event.provenance || {};
+    banner.innerHTML =
+      "<strong>Simulated session.</strong> The audio, its timings, the reference transcript and the " +
+      "per-turn language labels are real, from the " + escapeHtml(String(p.corpus || "corpus")) + ". " +
+      "The recogniser output and the latency figures are constructed, not measured. " +
+      "Set <code>ASSEMBLYAI_API_KEY</code> and press Play for a real session.";
+  }
+}
+
+function orderedTurns() {
+  return [...turns.values()].sort((a, b) => a.order - b.order);
+}
+
+function renderStream() {
+  const stream = $("stream");
+  const atBottom = stream.scrollHeight - stream.scrollTop - stream.clientHeight < 60;
+
+  stream.innerHTML = orderedTurns().map((turn) => {
+    if (!turn.final) {
+      return turn.partial
+        ? `<div class="turn partial"><div class="hyp">${escapeHtml(turn.partial)}</div></div>`
+        : "";
+    }
+
+    const final = turn.final;
+    const lang = (final.languageCode || "").toLowerCase();
+    const conf = final.languageConfidence
+      ? `<span class="conf">${final.languageConfidence.toFixed(2)}</span>` : "";
+    const flag = final.midTurnSwitch
+      ? `<span class="flag">switched mid-sentence</span>` : "";
+
+    const hits = turn.accuracy ? turn.accuracy.keytermsHit : [];
+    const body = turn.accuracy
+      ? renderDiff(turn.accuracy.ops, hits)
+      : markKeyterms(escapeHtml(final.transcript), hits);
+
+    // The reference is only worth showing when it differs -- otherwise it is just the
+    // same sentence twice.
+    const showRef = turn.accuracy &&
+      turn.accuracy.ops.some((op) => op.kind !== "ok") &&
+      turn.accuracy.reference;
+    const ref = showRef
+      ? `<div class="ref"><b>Spoken:</b> ${escapeHtml(turn.accuracy.reference)}</div>` : "";
+
+    const translation = turn.translation
+      ? `<div class="trans"><span class="arrow">&rarr;</span><span>${escapeHtml(turn.translation.text)}</span></div>`
+      : "";
+
+    const stt = final.sttMs || 0;
+    const tr = turn.translation ? turn.translation.translateMs : 0;
+    const tts = turn.ttsMs || 0;
+    const total = stt + tr + tts;
+    const bar = total > 0 ? `
+      <div class="microbar" title="recognise ${stt} ms · translate ${tr} ms · speak ${tts} ms">
+        <span class="s1" style="width:${(stt / total) * 100}%"></span>
+        <span class="s2" style="width:${(tr / total) * 100}%"></span>
+        <span class="s3" style="width:${(tts / total) * 100}%"></span>
+      </div>
+      <span class="total">${total} ms</span>` : "";
+
+    const wer = turn.accuracy && turn.accuracy.wer !== null
+      ? `<span class="wer">WER ${(turn.accuracy.wer * 100).toFixed(0)}%</span>`
+      : (turn.accuracy ? `<span class="wer">not scored</span>` : "");
+
+    return `<div class="turn">
+      <div class="turn-head">
+        <span class="chip ${lang}"><span class="dot"></span>${lang.toUpperCase()}${conf}</span>
+        ${flag}
+        <span class="turn-num">#${turn.order}</span>
+      </div>
+      <div class="hyp">${body}</div>
+      ${ref}
+      ${translation}
+      <div class="turn-foot">${bar}${wer}</div>
+    </div>`;
+  }).join("");
+
+  if (atBottom) stream.scrollTop = stream.scrollHeight;
+}
+
+/** Render the aligned diff so a customer can see which word went wrong, not just a rate. */
+function renderDiff(ops, hits) {
+  const hitWords = new Set(hits.flatMap((term) => term.toLowerCase().split(/\s+/)));
+  return ops.map((op) => {
+    const word = op.hyp !== undefined ? op.hyp : op.ref;
+    const text = escapeHtml(word || "");
+    if (op.kind === "ok") {
+      return hitWords.has((word || "").toLowerCase())
+        ? `<span class="w-key">${text}</span>` : text;
+    }
+    if (op.kind === "sub") return `<span class="w-sub" title="spoken: ${escapeHtml(op.ref || "")}">${text}</span>`;
+    if (op.kind === "ins") return `<span class="w-ins" title="not spoken">${text}</span>`;
+    return `<span class="w-del" title="missed">${text}</span>`;
+  }).join(" ");
+}
+
+function markKeyterms(html, hits) {
+  const hitWords = new Set(hits.flatMap((term) => term.toLowerCase().split(/\s+/)));
+  if (hitWords.size === 0) return html;
+  return html.split(" ").map((word) => {
+    const bare = word.toLowerCase().replace(/[.,!?;:]/g, "");
+    return hitWords.has(bare) ? `<span class="w-key">${word}</span>` : word;
+  }).join(" ");
+}
+
+function renderStats() {
+  const finals = orderedTurns().filter((turn) => turn.final);
+  const scored = orderedTurns().filter((turn) => turn.accuracy && turn.accuracy.wer !== null);
+
+  // Aggregate word error rate -- total errors over total reference words, which is how
+  // WER is defined. Averaging per-turn rates would let a two-word turn outweigh a
+  // twenty-word one.
+  let errors = 0;
+  let words = 0;
+  for (const turn of scored) {
+    for (const op of turn.accuracy.ops) {
+      if (op.kind !== "ins") words++;
+      if (op.kind !== "ok") errors++;
+    }
+  }
+  $("stat-wer").innerHTML = words
+    ? `${(errors / words * 100).toFixed(1)}<span class="unit">%</span>` : "&mdash;";
+  $("stat-wer-note").textContent = words
+    ? `${errors} errors in ${words} words spoken`
+    : "against the corpus transcript";
+
+  const hits = new Set();
+  for (const turn of orderedTurns()) {
+    if (turn.accuracy) for (const term of turn.accuracy.keytermsHit) hits.add(term);
+  }
+  const expected = session ? session.config.keyterms.length : 0;
+  $("stat-keyterms").innerHTML = expected
+    ? `${hits.size}<span class="unit">/ ${expected}</span>` : "&mdash;";
+
+  let switches = 0;
+  for (let i = 1; i < finals.length; i++) {
+    if (finals[i].final.languageCode !== finals[i - 1].final.languageCode) switches++;
+  }
+  const midTurn = finals.filter((turn) => turn.final.midTurnSwitch).length;
+  $("stat-switches").textContent = finals.length ? String(switches) : "—";
+  // Two different things, so say both rather than implying one contains the other:
+  // switches between turns, and turns that changed language part-way through.
+  $("stat-switches-note").textContent = finals.length
+    ? (midTurn
+        ? `between turns, plus ${midTurn} turns that switched mid-sentence`
+        : "between turns · nobody pressed a button")
+    : "nobody pressed a button";
+
+  const latencies = finals.map((turn) => turn.final.sttMs).sort((a, b) => a - b);
+  $("stat-latency").innerHTML = latencies.length
+    ? `${latencies[Math.floor(latencies.length / 2)]}<span class="unit">ms</span>` : "&mdash;";
+}
+
+function renderKeyterms() {
+  if (!session) return;
+  const hits = new Set();
+  for (const turn of orderedTurns()) {
+    if (turn.accuracy) for (const term of turn.accuracy.keytermsHit) hits.add(term);
+  }
+  $("keyterms").innerHTML = session.config.keyterms.map((term) =>
+    `<span class="term${hits.has(term) ? " hit" : ""}">${escapeHtml(term)}</span>`).join("");
+}
+
+// ---------------------------------------------------------------------------
+// Latency chart: stacked columns, one per turn, on a single axis.
+// ---------------------------------------------------------------------------
+
+function renderLatency() {
+  const svg = $("latency");
+  const rows = orderedTurns().filter((turn) => turn.final).map((turn) => ({
+    order: turn.order,
+    lang: (turn.final.languageCode || "").toUpperCase(),
+    stt: turn.final.sttMs || 0,
+    translate: turn.translation ? turn.translation.translateMs : 0,
+    tts: turn.ttsMs || 0,
+    transcript: turn.final.transcript,
+  }));
+
+  const width = svg.clientWidth || 700;
+  const height = 180;
+  const pad = { top: 10, right: 8, bottom: 22, left: 38 };
+  const plotW = Math.max(width - pad.left - pad.right, 10);
+  const plotH = height - pad.top - pad.bottom;
+
+  if (rows.length === 0) { svg.innerHTML = ""; return; }
+
+  const max = Math.max(...rows.map((r) => r.stt + r.translate + r.tts), 100);
+  // Round the axis top to a clean number so the ticks read 0 / 500 / 1,000.
+  const step = max > 1500 ? 500 : max > 600 ? 250 : 100;
+  const top = Math.ceil(max / step) * step;
+  const y = (value) => pad.top + plotH - (value / top) * plotH;
+
+  // Cap the bar at 24px and let the leftover band be air.
+  const band = plotW / rows.length;
+  const barW = Math.min(band - 3, 24);
+
+  const ticks = [];
+  for (let value = 0; value <= top; value += step) {
+    ticks.push(`<line x1="${pad.left}" x2="${width - pad.right}" y1="${y(value)}" y2="${y(value)}" ${value === 0 ? 'class="base"' : ""}/>
+      <text x="${pad.left - 7}" y="${y(value) + 3.5}" text-anchor="end">${value.toLocaleString()}</text>`);
+  }
+
+  const columns = rows.map((row, index) => {
+    const x = pad.left + index * band + (band - barW) / 2;
+    const total = row.stt + row.translate + row.tts;
+    const scale = plotH / top;
+
+    // 2px surface gap between stacked segments; the top segment gets the 4px rounded
+    // data-end, the one at the baseline stays square.
+    let cursor = pad.top + plotH;
+    const segments = [
+      ["var(--stage-stt)", row.stt],
+      ["var(--stage-translate)", row.translate],
+      ["var(--stage-tts)", row.tts],
+    ].filter(([, value]) => value > 0);
+
+    const rects = segments.map(([fill, value], seg) => {
+      const h = Math.max(value * scale - (seg === 0 ? 0 : 2), 1);
+      cursor -= h;
+      const rect = `<rect x="${x}" y="${cursor}" width="${barW}" height="${h}" fill="${fill}" ${
+        seg === segments.length - 1 ? `rx="3"` : ""}/>`;
+      cursor -= 2;
+      return rect;
+    }).join("");
+
+    return `<g class="col" data-tip="Turn ${row.order} · ${row.lang}&#10;recognise ${row.stt} ms&#10;translate ${row.translate} ms&#10;speak ${row.tts} ms&#10;total ${total} ms">
+      ${rects}
+      <rect x="${x - 1.5}" y="${pad.top}" width="${barW + 3}" height="${plotH}" fill="transparent"/>
+    </g>`;
+  }).join("");
+
+  // Label the extreme only. A number on every column is unreadable and goes unread.
+  const slowest = rows.reduce((worst, row, index) =>
+    (row.stt + row.translate + row.tts) > (worst.value)
+      ? { index, value: row.stt + row.translate + row.tts } : worst, { index: 0, value: 0 });
+  const labelX = pad.left + slowest.index * band + band / 2;
+  const label = `<text x="${labelX}" y="${y(slowest.value) - 6}" text-anchor="middle"
+    style="font:600 10.5px var(--sans); fill: var(--ink-2)">${slowest.value} ms</text>`;
+
+  svg.setAttribute("viewBox", `0 0 ${width} ${height}`);
+  svg.innerHTML = `<g class="axis">${ticks.join("")}</g>${columns}${label}
+    <text class="axis" x="${pad.left}" y="${height - 6}" style="font:10.5px var(--sans); fill: var(--ink-muted)">turn 1</text>
+    <text class="axis" x="${width - pad.right}" y="${height - 6}" text-anchor="end" style="font:10.5px var(--sans); fill: var(--ink-muted)">turn ${rows.length}</text>`;
+
+  const body = document.querySelector("#latency-table tbody");
+  body.innerHTML = rows.map((row) => `<tr>
+    <td class="num">${row.order}</td><td class="num">${row.lang}</td>
+    <td class="num">${row.stt}</td><td class="num">${row.translate}</td>
+    <td class="num">${row.tts}</td>
+    <td class="num">${row.stt + row.translate + row.tts}</td>
+    <td>${escapeHtml(row.transcript)}</td></tr>`).join("");
+}
+
+// Universal-3.5 Pro Realtime, from AssemblyAI's published pricing. Used only to turn
+// the idle stretch into a number a customer can act on.
+const RATE_PER_HOUR = 0.45;
+const FLEET = 100000;
+const SESSIONS_PER_DEVICE_PER_DAY = 6;
+
+function renderMeter(connectionMs, audioMs) {
+  const connection = Math.max(connectionMs, 1);
+  const audio = Math.min(audioMs, connection);
+  const idle = connection - audio;
+
+  $("meter-conn").textContent = (connection / 1000).toFixed(1) + "s";
+  $("meter-audio").textContent = (audio / 1000).toFixed(1) + "s";
+  $("meter-idle").textContent = (idle / 1000).toFixed(1) + "s";
+  $("meter-audio-fill").style.width = (audio / connection) * 100 + "%";
+  $("meter-idle-fill").style.width = (idle / connection) * 100 + "%";
+
+  const waste = $("meter-waste");
+  if (idle < 500) { waste.textContent = ""; return; }
+  const wastedHours = (idle / 3_600_000) * FLEET * SESSIONS_PER_DEVICE_PER_DAY;
+  waste.innerHTML =
+    `<strong>${(idle / connection * 100).toFixed(0)}% of this session was billed for silence.</strong> ` +
+    `At ${FLEET.toLocaleString()} devices and ${SESSIONS_PER_DEVICE_PER_DAY} sessions a day, ` +
+    `the same tail costs about <strong>$${Math.round(wastedHours * RATE_PER_HOUR).toLocaleString()} a day</strong>.`;
+}
+
+// ---------------------------------------------------------------------------
+// Chrome
+// ---------------------------------------------------------------------------
+
+function startClock() {
+  stopClock();
+  clockTimer = setInterval(() => {
+    const seconds = Math.floor((Date.now() - startedAt) / 1000);
+    $("clock").textContent =
+      `${String(Math.floor(seconds / 60)).padStart(2, "0")}:${String(seconds % 60).padStart(2, "0")}`;
+  }, 250);
+}
+function stopClock() { if (clockTimer) clearInterval(clockTimer); clockTimer = null; }
+
+function escapeHtml(text) {
+  return String(text).replace(/[&<>"']/g, (character) =>
+    ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[character]);
+}
+
+const tooltip = $("tooltip");
+document.addEventListener("mousemove", (event) => {
+  const target = event.target.closest("[data-tip]");
+  if (!target) { tooltip.style.opacity = "0"; return; }
+  tooltip.textContent = target.dataset.tip;
+  tooltip.style.opacity = "1";
+  tooltip.style.left = Math.min(event.clientX + 14, innerWidth - 250) + "px";
+  tooltip.style.top = (event.clientY + 16) + "px";
+});
+
+$("play").addEventListener("click", async () => {
+  $("play").disabled = true;
+  const health = await fetch("/api/health").then((response) => response.json());
+  const endpoint = health.apiKeyConfigured && health.sampleAudioPresent
+    ? "/api/session" : "/api/replay";
+  const response = await fetch(endpoint, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: "{}",
+  });
+  if (!response.ok) showError((await response.json()).error || "failed to start");
+});
+
+$("stop").addEventListener("click", async () => {
+  await fetch("/api/stop", { method: "POST" });
+  $("stop").disabled = true;
+  $("play").disabled = false;
+  stopClock();
+});
+
+$("theme").addEventListener("click", () => {
+  const dark = matchMedia("(prefers-color-scheme: dark)").matches;
+  const current = document.documentElement.dataset.theme || (dark ? "dark" : "light");
+  document.documentElement.dataset.theme = current === "dark" ? "light" : "dark";
+  renderLatency();
+});
+
+addEventListener("resize", renderLatency);
+
+fetch("/api/health").then((response) => response.json()).then((health) => {
+  $("footer").innerHTML = health.apiKeyConfigured
+    ? "API key configured. Play runs a live session against AssemblyAI."
+    : "No <code>ASSEMBLYAI_API_KEY</code> set, so Play replays the bundled sample. " +
+      "Audio and transcript from the Bangor Miami corpus (Deuchar et al., Bangor University), " +
+      "used under GPL-3 with the TalkBank code of ethics.";
+});
+
+connect();
+</script>
+</body>
+</html>

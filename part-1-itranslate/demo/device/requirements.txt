@@ -1,6 +1,0 @@
-# iTranslate device simulator
-websocket-client>=1.5.1
-requests>=2.31.0
-
-# microphone input; skip if you only use --file
-pyaudio>=0.2.14

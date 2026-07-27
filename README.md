@@ -18,33 +18,36 @@ speech, translates it, and speaks the result. They want better transcription acc
 
 **What I found.** They asked for accuracy. The bigger opportunity is that their device needs a
 language button, because a language-pinned recognizer has to be told what's coming before
-someone speaks. Universal-3.5 Pro switches languages mid-sentence inside one session, so the
-button can go away. Two people just pick it up and talk.
+someone speaks. Get it wrong and the device doesn't error — it confidently speaks the wrong
+thing, and neither person can tell. Universal-3.5 Pro returns the language per turn and follows
+a switch mid-sentence, so the button can come off. Two people just pick it up and talk.
 
-**The largest accuracy lever is one almost nobody turns on.** Sending the model a description of
-the situation cuts word error rate 21% and errors on people's names 49%, per AssemblyAI's own
-benchmark. A handheld knows its GPS location, the selected topic, and what was said 30 seconds
-ago, so it can build that description automatically on every session.
+**The largest accuracy lever is one almost nobody turns on.** A 20–50 word description of the
+situation cuts word error rate **21%** and entity errors **29%**, measured over 20,000 calls. A
+handheld knows its GPS location, the selected situation and the traveller's itinerary, so it can
+write that description itself on every session. The user types nothing.
 
 | Deliverable | File |
 |---|---|
-| **Demo brief for the account executive**, the pitch and the six-minute script | [00-demo-brief.md](part-1-itranslate/00-demo-brief.md) |
-| **Dashboard**, the screen you put in front of the customer | [index.html](part-1-itranslate/demo/dashboard/index.html) |
-| **The approach documentation**: problem, architecture, speed, bandwidth, cost, proof plan, risks | [01-approach.md](part-1-itranslate/01-approach.md) |
-| Accuracy playbook: 8 levers ranked by return | [02-accuracy-playbook.md](part-1-itranslate/02-accuracy-playbook.md) |
-| Token broker, translation proxy and event bus (TypeScript) | [server.ts](part-1-itranslate/demo/backend/src/server.ts) |
-| Device simulator (Python) | [translator.py](part-1-itranslate/demo/device/translator.py) |
-| Accuracy benchmark harness (Python) | [accuracy_bench.py](part-1-itranslate/demo/bench/accuracy_bench.py) |
+| **The demo** — one tuned pipeline, live, every stage on screen | [demo/](part-1-itranslate/demo/) |
+| **How to run it, and what's real vs. simulated** | [README.md](part-1-itranslate/README.md) |
+| **The approach**: architecture, levers ranked, cost, limits, sources | [APPROACH.md](part-1-itranslate/APPROACH.md) |
+| Scoring engine — word error rate + keyterm recall, unit tested | [score.ts](part-1-itranslate/demo/src/score.ts) |
+| The connection parameters, and why each one is set that way | [config.ts](part-1-itranslate/demo/src/config.ts) |
+| Dashboard — one file, no bundler, no CDN | [index.html](part-1-itranslate/demo/public/index.html) |
+| Device simulator (Python) — token, own socket, in-session translation, TTS | [device_sim.py](part-1-itranslate/device/device_sim.py) |
 
-**The dashboard runs with no API key.** `npm install && npm run build && npm start`, open
-http://localhost:8787, press Play. It plays a scripted bilingual conversation and shows the
-language being detected per turn, where the latency goes, the exact parameters the device sent,
-and a live billing meter. A banner says the data is scripted. With a key, the same dashboard
-shows a real session.
+**Runs with no API key.** `npm install && npm run build && npm start`, open
+http://localhost:8787, press Play.
 
-Two things they didn't ask about: streaming bills on **connection time, not audio sent**, which
-at fleet scale is a 6x cost difference depending on session policy. And Opus encoding cuts
-bandwidth about **tenfold**, which matters a lot on a battery-powered cellular device.
+The demo audio is **real spontaneous bilingual conversation**, not TTS and not scripted — two
+cousins in a Miami restaurant from the Bangor Miami corpus, with a human reference transcript.
+Overlapping speech, false starts, and three turns that change language mid-sentence. Word error
+rate is scored live against that transcript and errors are marked word by word.
+
+Two things they didn't ask about: streaming bills on **connection time, not audio sent** — the
+demo shows 23% of a session billed for silence, roughly $1,000 a day at fleet scale. And Opus
+encoding cuts bandwidth about **tenfold**, which matters on a battery-powered cellular device.
 
 ---
 
@@ -95,24 +98,33 @@ report had no detail. They weren't being unhelpful, they genuinely couldn't see 
 **The dashboard, no API key needed.** This is the one to run first.
 
 ```bash
-cd part-1-itranslate/demo/backend
+cd part-1-itranslate/demo
 npm install
 npm run build && npm start
-# open http://localhost:8787 and press "Play sample conversation"
+# open http://localhost:8787 and press "Play session"
 ```
 
-**Live, with a key.** Start the backend as above with `ASSEMBLYAI_API_KEY` set, then in a
-second terminal point the device simulator at it. The dashboard updates as it runs.
+**Live, with a key.** Fetch the sample audio, then start the server with a key set. The
+dashboard runs a real session on the same conversation.
 
 ```bash
-cd part-1-itranslate/demo/device
-pip install -r requirements.txt
+cd part-1-itranslate/demo
+./audio/fetch_sample.sh          # ~23 MB, needs ffmpeg or macOS afconvert
 export ASSEMBLYAI_API_KEY=your_key
-
-# no microphone needed, reuses the bilingual sample from Part 2
-python3 translator.py --pair en,es --dashboard \
-  --file ../../../part-2-spanglish/code/python/sample_bilingual.wav
+npm start
 ```
+
+**The handheld itself.** Its own socket to AssemblyAI, no key on the device, translation
+inside the session, speech out.
+
+```bash
+cd part-1-itranslate/device && pip install -r requirements.txt
+python3 device_sim.py --file ../demo/audio/herring1.wav --dashboard
+python3 device_sim.py --mic --dashboard
+```
+
+**Tests.** `cd part-1-itranslate/demo && npm test` — the word error rate engine against
+hand-computed cases.
 
 ### Part 2
 
@@ -146,16 +158,31 @@ python3 part-2-spanglish/code/python/production_client.py
 
 Being upfront about this because it affects how much weight to put on each claim.
 
-**Actually ran:**
+**Actually ran, Part 1:**
+- `tsc --noEmit` clean under strict mode; 13 unit tests pass, every expected value hand-computed
+- The replay drives the full event stream: 24 turns, 3 mid-turn language switches, 11/11
+  keyterms, 1 unintelligible turn correctly excluded from scoring, 7.3% aggregate word error rate
+- `fetch_sample.sh` end to end — downloads the corpus, cuts the window, produces a 44.8s
+  16 kHz mono WAV, rebuilds the fixture from the same transcript
+- The WAV decoder against that real file: 448 chunks of 100 ms, inside the API's 50–1000 ms window
+- The dashboard opened in a browser and checked in both light and dark
+
+**Actually ran, Part 2:**
 - The original file does not compile. JDK 19, two errors. Output saved in
   [reference/](part-2-spanglish/reference/javac-original-output.txt)
 - The fixed file compiles clean with all warnings enabled
 - The scaling math, which produced the 12-minute and 4-minute ramp numbers
 - The test audio generator
 
-**Did not run:** I had no API key, so nothing was tested against the live AssemblyAI API. The
-predicted behaviour comes from their published docs. `repro.py` exists so anyone with a key can
-confirm or disprove all of it in about two minutes.
+**Did not run:** I had no API key, so nothing in either part was tested against the live
+AssemblyAI API. The predicted behaviour comes from their published docs, cited in
+[APPROACH.md](part-1-itranslate/APPROACH.md). `repro.py` and the Part 1 scoring engine both
+exist so anyone with a key can confirm or disprove all of it in minutes.
+
+**One claim I corrected while rebuilding Part 1:** an earlier draft said Universal-3.5 Pro
+streaming covers 18 languages and that prompting cuts name errors 49%. Neither is what
+AssemblyAI publishes — it is 6 languages (en, es, de, fr, pt, it), and the documented figures
+are 21% WER / 29% entity error. Both are fixed above and sourced in APPROACH.md.
 
 **One open question I couldn't answer:** AssemblyAI's own docs disagree about which model you
 get when you don't pick one. The API reference says one thing, the migration guide says another.

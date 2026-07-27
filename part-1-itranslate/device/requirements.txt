@@ -1,0 +1,6 @@
+# The device simulator's only hard dependency.
+websockets>=12.0
+
+# Only needed for --mic. Requires PortAudio (brew install portaudio); the --file path
+# works without it.
+# sounddevice>=0.4.6

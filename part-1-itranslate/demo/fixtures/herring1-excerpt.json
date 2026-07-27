@@ -1,0 +1,452 @@
+{
+  "meta": {
+    "simulated": true,
+    "corpus": "Bangor Miami corpus (Deuchar et al.), file herring1",
+    "situation": "Informal conversation between two cousins in a restaurant, Miami, 8 March 2008",
+    "window": "utterances 262-292",
+    "audioStartMs": 408503,
+    "audioEndMs": 453296,
+    "audioFile": "herring1.wav",
+    "real": [
+      "the audio and its timings",
+      "the reference transcript",
+      "the per-turn language labels",
+      "the English translations of the Spanish turns (corpus %eng tier)"
+    ],
+    "simulatedParts": [
+      "the recogniser output (constructed, not measured)",
+      "the per-stage latency figures",
+      "the Spanish translations of the English turns"
+    ]
+  },
+  "session": {
+    "prompt": "Informal conversation between two bilingual English and Spanish speakers in a restaurant in Miami, planning a trip. They switch between English and Spanish mid-sentence. Cities, airlines and ticket prices are discussed.",
+    "keyterms": [
+      "Fort Lauderdale",
+      "Kingston",
+      "Nicaragua",
+      "Jamaica",
+      "Chicago",
+      "Boston",
+      "Washington",
+      "Paige",
+      "Fernando",
+      "Michael",
+      "Lauren"
+    ]
+  },
+  "turns": [
+    {
+      "order": 1,
+      "speaker": "LAU",
+      "utterances": [
+        262
+      ],
+      "audioStartMs": 0,
+      "audioEndMs": 488,
+      "reference": "they gave them a list.",
+      "transcript": "they gave them a list",
+      "languageCode": "en",
+      "midTurnSwitch": false,
+      "unintelligible": false,
+      "translation": "les dieron una lista",
+      "translationSource": "written for the fixture",
+      "target": "es"
+    },
+    {
+      "order": 2,
+      "speaker": "LAU",
+      "utterances": [
+        263
+      ],
+      "audioStartMs": 499,
+      "audioEndMs": 1591,
+      "reference": "they're going to Boston.",
+      "transcript": "they're going to Boston",
+      "languageCode": "en",
+      "midTurnSwitch": false,
+      "unintelligible": false,
+      "translation": "van a ir a Boston",
+      "translationSource": "written for the fixture",
+      "target": "es"
+    },
+    {
+      "order": 3,
+      "speaker": "LAU",
+      "utterances": [
+        264
+      ],
+      "audioStartMs": 1573,
+      "audioEndMs": 2868,
+      "reference": "they're going to Washington.",
+      "transcript": "they're going to Washington",
+      "languageCode": "en",
+      "midTurnSwitch": false,
+      "unintelligible": false,
+      "translation": "van a ir a Washington",
+      "translationSource": "written for the fixture",
+      "target": "es"
+    },
+    {
+      "order": 4,
+      "speaker": "LAU",
+      "utterances": [
+        265,
+        266,
+        267
+      ],
+      "audioStartMs": 2891,
+      "audioEndMs": 6182,
+      "reference": "they're going to and the the husband's like y ay! are you ok like?",
+      "transcript": "they're going to and the husband's like ay are you ok like",
+      "languageCode": "en",
+      "midTurnSwitch": true,
+      "unintelligible": false,
+      "translation": "van a ir — y el marido dice: «y ¡ay!» «¿estás bien?», o sea",
+      "translationSource": "written for the fixture",
+      "target": "es"
+    },
+    {
+      "order": 5,
+      "speaker": "LAU",
+      "utterances": [
+        269
+      ],
+      "audioStartMs": 6357,
+      "audioEndMs": 7320,
+      "reference": "you know like after a while.",
+      "transcript": "you know, like, after a while",
+      "languageCode": "en",
+      "midTurnSwitch": false,
+      "unintelligible": false,
+      "translation": "ya sabes, después de un rato",
+      "translationSource": "written for the fixture",
+      "target": "es"
+    },
+    {
+      "order": 6,
+      "speaker": "CHL",
+      "utterances": [
+        270
+      ],
+      "audioStartMs": 7425,
+      "audioEndMs": 8226,
+      "reference": "so hello!",
+      "transcript": "so hello",
+      "languageCode": "en",
+      "midTurnSwitch": false,
+      "unintelligible": false,
+      "translation": "¡hola!",
+      "translationSource": "written for the fixture",
+      "target": "es"
+    },
+    {
+      "order": 7,
+      "speaker": "LAU",
+      "utterances": [
+        271
+      ],
+      "audioStartMs": 7523,
+      "audioEndMs": 8319,
+      "reference": "he was like.",
+      "transcript": "was like",
+      "languageCode": "en",
+      "midTurnSwitch": false,
+      "unintelligible": false,
+      "translation": "él estaba como",
+      "translationSource": "written for the fixture",
+      "target": "es"
+    },
+    {
+      "order": 8,
+      "speaker": "LAU",
+      "utterances": [
+        272,
+        273
+      ],
+      "audioStartMs": 8302,
+      "audioEndMs": 10235,
+      "reference": "yeah he says are you gonna travel your whole the whole country with Paige?",
+      "transcript": "yeah he says are you gonna travel the whole country with Paige",
+      "languageCode": "en",
+      "midTurnSwitch": false,
+      "unintelligible": false,
+      "translation": "sí, él dice: «¿vas a viajar por todo el país con Paige?»",
+      "translationSource": "written for the fixture",
+      "target": "es"
+    },
+    {
+      "order": 9,
+      "speaker": "LAU",
+      "utterances": [
+        274
+      ],
+      "audioStartMs": 10137,
+      "audioEndMs": 11571,
+      "reference": "porque se llama Paige the girl.",
+      "transcript": "porque se llama Paige the girl",
+      "languageCode": "es",
+      "midTurnSwitch": true,
+      "unintelligible": false,
+      "translation": "because the girl's name is Paige",
+      "translationSource": "corpus %eng tier (human)",
+      "target": "en"
+    },
+    {
+      "order": 10,
+      "speaker": "CHL",
+      "utterances": [
+        275
+      ],
+      "audioStartMs": 11415,
+      "audioEndMs": 12129,
+      "reference": "ah!",
+      "transcript": "ah",
+      "languageCode": "en",
+      "midTurnSwitch": false,
+      "unintelligible": false,
+      "translation": "¡ah!",
+      "translationSource": "written for the fixture",
+      "target": "es"
+    },
+    {
+      "order": 11,
+      "speaker": "LAU",
+      "utterances": [
+        276
+      ],
+      "audioStartMs": 12231,
+      "audioEndMs": 13456,
+      "reference": "so it's really gonna.",
+      "transcript": "so it's really gonna",
+      "languageCode": "en",
+      "midTurnSwitch": false,
+      "unintelligible": true,
+      "translation": "así que de verdad va a",
+      "translationSource": "written for the fixture",
+      "target": "es"
+    },
+    {
+      "order": 12,
+      "speaker": "LAU",
+      "utterances": [
+        277,
+        278
+      ],
+      "audioStartMs": 13694,
+      "audioEndMs": 14646,
+      "reference": "I'm like I think I'm gonna join.",
+      "transcript": "I'm like I think I'm gonna join",
+      "languageCode": "en",
+      "midTurnSwitch": false,
+      "unintelligible": false,
+      "translation": "yo estaba como: «creo que me voy a apuntar»",
+      "translationSource": "written for the fixture",
+      "target": "es"
+    },
+    {
+      "order": 13,
+      "speaker": "LAU",
+      "utterances": [
+        279
+      ],
+      "audioStartMs": 14617,
+      "audioEndMs": 16231,
+      "reference": "the only thing is they don't fly to Canada so I'm like",
+      "transcript": "the only thing is they don't fly to Canada so I'm",
+      "languageCode": "en",
+      "midTurnSwitch": false,
+      "unintelligible": false,
+      "translation": "lo único es que no vuelan a Canadá, así que yo estaba como",
+      "translationSource": "written for the fixture",
+      "target": "es"
+    },
+    {
+      "order": 14,
+      "speaker": "CHL",
+      "utterances": [
+        280
+      ],
+      "audioStartMs": 16516,
+      "audioEndMs": 17369,
+      "reference": "yeah.",
+      "transcript": "yeah",
+      "languageCode": "en",
+      "midTurnSwitch": false,
+      "unintelligible": false,
+      "translation": "sí",
+      "translationSource": "written for the fixture",
+      "target": "es"
+    },
+    {
+      "order": 15,
+      "speaker": "LAU",
+      "utterances": [
+        281
+      ],
+      "audioStartMs": 17520,
+      "audioEndMs": 19632,
+      "reference": "but they they fly to Chicago.",
+      "transcript": "but they fly to Chicago",
+      "languageCode": "en",
+      "midTurnSwitch": false,
+      "unintelligible": false,
+      "translation": "pero vuelan a Chicago",
+      "translationSource": "written for the fixture",
+      "target": "es"
+    },
+    {
+      "order": 16,
+      "speaker": "LAU",
+      "utterances": [
+        282
+      ],
+      "audioStartMs": 19725,
+      "audioEndMs": 21632,
+      "reference": "they have Chicago from Fort Lauderdale.",
+      "transcript": "they have Chicago from Fort Lauderdale",
+      "languageCode": "en",
+      "midTurnSwitch": false,
+      "unintelligible": false,
+      "translation": "tienen Chicago desde Fort Lauderdale",
+      "translationSource": "written for the fixture",
+      "target": "es"
+    },
+    {
+      "order": 17,
+      "speaker": "LAU",
+      "utterances": [
+        283
+      ],
+      "audioStartMs": 21763,
+      "audioEndMs": 23826,
+      "reference": "for forty four eighty eight dollars round trip.",
+      "transcript": "for forty four eighty eight dollars round trip",
+      "languageCode": "en",
+      "midTurnSwitch": false,
+      "unintelligible": false,
+      "translation": "por cuarenta y cuatro — ochenta y ocho dólares ida y vuelta",
+      "translationSource": "written for the fixture",
+      "target": "es"
+    },
+    {
+      "order": 18,
+      "speaker": "CHL",
+      "utterances": [
+        284
+      ],
+      "audioStartMs": 23343,
+      "audioEndMs": 30953,
+      "reference": "Fernando from Nicaragua he paid I think it was like one hundred and two or something like that something ridiculous.",
+      "transcript": "Fernando from Nicaragua, he paid, I think it was like one hundred two or something like that, it's ridiculous",
+      "languageCode": "en",
+      "midTurnSwitch": false,
+      "unintelligible": false,
+      "translation": "Fernando desde Nicaragua pagó, creo que fue como ciento dos o algo así, algo ridículo",
+      "translationSource": "written for the fixture",
+      "target": "es"
+    },
+    {
+      "order": 19,
+      "speaker": "LAU",
+      "utterances": [
+        285
+      ],
+      "audioStartMs": 30151,
+      "audioEndMs": 35071,
+      "reference": "Jamaica round trip ticket to Kingston where Michael stays one one oh nine.",
+      "transcript": "Jamaica round trip ticket to Kingston where Michael stays one oh nine",
+      "languageCode": "en",
+      "midTurnSwitch": false,
+      "unintelligible": false,
+      "translation": "billete de ida y vuelta a Jamaica, a Kingston, donde vive Michael: ciento nueve",
+      "translationSource": "written for the fixture",
+      "target": "es"
+    },
+    {
+      "order": 20,
+      "speaker": "LAU",
+      "utterances": [
+        286
+      ],
+      "audioStartMs": 34948,
+      "audioEndMs": 36061,
+      "reference": "it's good.",
+      "transcript": "it's good",
+      "languageCode": "en",
+      "midTurnSwitch": false,
+      "unintelligible": false,
+      "translation": "está bien",
+      "translationSource": "written for the fixture",
+      "target": "es"
+    },
+    {
+      "order": 21,
+      "speaker": "LAU",
+      "utterances": [
+        288
+      ],
+      "audioStartMs": 36847,
+      "audioEndMs": 37952,
+      "reference": "so what happened at work?",
+      "transcript": "so what happened at work",
+      "languageCode": "en",
+      "midTurnSwitch": false,
+      "unintelligible": false,
+      "translation": "¿y qué pasó en el trabajo?",
+      "translationSource": "written for the fixture",
+      "target": "es"
+    },
+    {
+      "order": 22,
+      "speaker": "CHL",
+      "utterances": [
+        289
+      ],
+      "audioStartMs": 36937,
+      "audioEndMs": 37952,
+      "reference": "I need a",
+      "transcript": "I need",
+      "languageCode": "en",
+      "midTurnSwitch": false,
+      "unintelligible": false,
+      "translation": "necesito un",
+      "translationSource": "written for the fixture",
+      "target": "es"
+    },
+    {
+      "order": 23,
+      "speaker": "CHL",
+      "utterances": [
+        291
+      ],
+      "audioStartMs": 39259,
+      "audioEndMs": 43123,
+      "reference": "Lauren like I'm ay me tienen cansada.",
+      "transcript": "Lauren like I'm ay me tienen cansada",
+      "languageCode": "es",
+      "midTurnSwitch": true,
+      "unintelligible": false,
+      "translation": "Lauren like, oh, they've tired me out",
+      "translationSource": "corpus %eng tier (human)",
+      "target": "en"
+    },
+    {
+      "order": 24,
+      "speaker": "CHL",
+      "utterances": [
+        292
+      ],
+      "audioStartMs": 43164,
+      "audioEndMs": 44793,
+      "reference": "it's ridiculous.",
+      "transcript": "it's ridiculous",
+      "languageCode": "en",
+      "midTurnSwitch": false,
+      "unintelligible": false,
+      "translation": "es ridículo",
+      "translationSource": "written for the fixture",
+      "target": "es"
+    }
+  ]
+}
