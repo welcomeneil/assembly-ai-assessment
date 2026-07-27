@@ -124,11 +124,7 @@ transmitted. At 2,000 concurrent streams, connections left open during recesses 
 meaningful cost. I put this in writing to their engineering lead. Confirm it has reached whoever
 owns their infrastructure budget.
 
-**Assessment of the relationship.** They were frustrated but reasonable, and responded
-constructively as soon as they received something concrete. Their initial report was brief
-because their client provided no diagnostic output, not because they were unwilling to
-investigate. That context is worth providing if the account is characterised negatively
-internally.
+**Assessment of the relationship.** They were frustrated but reasonable!
 
 ---
 
