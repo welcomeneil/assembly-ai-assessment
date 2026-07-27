@@ -105,6 +105,7 @@ and a longer silence threshold both hurt. Numbers and repeat runs in
 [MEASUREMENTS.md](part-1-itranslate/demo/fixtures/MEASUREMENTS.md). One 56-second clip, so these
 are directional — which is why the harness ships, not just the numbers.
 
+<<<<<<< HEAD
 **Part 2 was not run against the live API** — no key at the time. The compile failure, the clean
 rebuild, the scaling math and the sample generator were all run locally; the predicted stream
 behaviours (close `3007`, silent Opus decode failure, English-only output) come from the
@@ -122,3 +123,11 @@ published docs. `repro.py` exists so anyone with a key can confirm or refute the
    silence; at 2,000 concurrent streams that's roughly $300–900/hr, idle sockets at full price.
 3. **Async has weaker retention guarantees than the streaming path they asked about.** Streaming
    keeps nothing; async holds audio 24–48h and transcripts 72h by default.
+=======
+**Actually ran, Part 2:**
+- The original file does not compile. JDK 19, two errors. Output saved in
+  [reference/](part-2-spanglish/reference/javac-original-output.txt)
+- The fixed file compiles clean with all warnings enabled
+- The scaling math, which produced the 12-minute and 4-minute ramp numbers
+- The test audio generator
+>>>>>>> 8ebd2956d793d2a34dd7174553afc34dddf0bae9
