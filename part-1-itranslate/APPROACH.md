@@ -17,8 +17,8 @@ thing, and neither person can tell, because neither reads the other's language.
 sentence. **The button can come off the device.** The accuracy work below is real, but
 this is the part worth a second meeting.
 
-*Caveat: I'm inferring the button from how comparable devices work — I haven't seen
-their firmware. It's the first question to ask. If I'm wrong, everything below stands.*
+*Caveat: I'm inferring the button from how comparable devices work
+It's the first question to ask. If I'm wrong, everything below stands.*
 
 ---
 
