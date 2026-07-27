@@ -7,13 +7,12 @@
 | **[Part 1 — iTranslate](part-1-itranslate/)** | Demo + approach for a handheld translator that wants better speech-to-text | [approach](part-1-itranslate/APPROACH.md) · [measurements](part-1-itranslate/demo/fixtures/MEASUREMENTS.md) |
 | **[Part 2 — Spanglish Inc.](part-2-spanglish/)** | Production customer says streaming "doesn't work at all." Fix it, explain it, scale to 2,000 streams | [root cause](part-2-spanglish/01-root-cause.md) · [email](part-2-spanglish/02-customer-email.md) · [scaling](part-2-spanglish/03-scaling-to-2000.md) · [privacy](part-2-spanglish/04-data-privacy.md) · [internal](part-2-spanglish/05-internal-eng-summary.md) · [handoff](part-2-spanglish/06-handoff.md) |
 
-**Part 1 in a sentence.** They asked for accuracy; the bigger opportunity is deleting the
-language button. Universal-3.5 Pro returns a language per turn and follows a mid-sentence
+**Part 1 in a sentence.** They asked for accuracy; Universal-3.5 Pro returns a language per turn and follows a mid-sentence
 switch, so two people can just pick the device up and talk. The dashboard shows one tuned
 session running on real spontaneous bilingual audio, scored live against a human transcript.
 
 **Part 2 in a sentence.** No defect on our side — four independent client-side faults, each
-individually fatal, plus error handling that discarded every diagnostic we sent, which is why
+individually fatal, plus error handling that discarded diagnostics, which is why
 their bug report had no detail.
 
 ---
@@ -23,7 +22,7 @@ their bug report had no detail.
 Prerequisites: Node 18+ (Part 1), Python 3.9+ and a JDK (Part 2). An API key is only needed
 where noted.
 
-### 1. Part 1 dashboard — no API key
+### 1. Part 1 dashboard
 
 The one to run first. Replays a recording of a real session at its captured timings.
 
@@ -103,7 +102,7 @@ and a longer silence threshold both hurt. Numbers and repeat runs in
 [MEASUREMENTS.md](part-1-itranslate/demo/fixtures/MEASUREMENTS.md). One 56-second clip, so these
 are directional — which is why the harness ships, not just the numbers.
 
-**Part 2 was not run against the live API** — no key at the time. The compile failure, the clean
+**Part 2 was not run against the live API** The compile failure, the clean
 rebuild, the scaling math and the sample generator were all run locally; the predicted stream
 behaviours (close `3007`, silent Opus decode failure, English-only output) come from the
 published docs. `repro.py` exists so anyone with a key can confirm or refute them in two minutes.
