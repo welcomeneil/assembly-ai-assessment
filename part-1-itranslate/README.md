@@ -33,11 +33,15 @@ npm start                                        # Play now runs live
 npm run capture                                  # or re-record the offline session
 ```
 
-Or run the handheld path itself — its own token, its own socket, no key on the device:
+Or run the handheld path itself — its own token, its own socket, no key on the device.
+It needs the server above running *with* a key, since that is where its token comes from:
 
 ```bash
 cd device && pip install -r requirements.txt
 python3 device_sim.py --file ../demo/audio/paris.wav --dashboard
+
+# --mic also needs PortAudio, kept out of requirements.txt so --file installs cleanly
+brew install portaudio && pip install sounddevice
 python3 device_sim.py --mic --dashboard
 ```
 </details>

@@ -26,9 +26,14 @@ CP="lib/*"
 
 if [[ "${1:-}" == "original" ]]; then
   # Demonstrates defect #1: the file as sent does not compile.
+  ORIGINAL=../../reference/original/com/assemblyai/Spanglish.java
+  # Checked explicitly: a missing file also makes javac exit non-zero, and the point of
+  # this command is to show a *compile* error, not to be satisfied by any failure at all.
+  [[ -f "$ORIGINAL" ]] || { echo "error: $ORIGINAL not found" >&2; exit 1; }
+
   echo "Compiling the ORIGINAL customer file, this is expected to FAIL:"
   echo
-  javac -cp "$CP" -d /tmp/spanglish-original ././reference/original/com/assemblyai/Spanglish.java \
+  javac -cp "$CP" -d /tmp/spanglish-original "$ORIGINAL" \
     && { echo "UNEXPECTED: the original compiled."; exit 1; } \
     || { echo; echo "^ Expected. Defect #1: main() instantiates StreamingTranscription, which does not exist."; exit 0; }
 fi

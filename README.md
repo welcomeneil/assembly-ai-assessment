@@ -19,10 +19,10 @@ their bug report had no detail.
 
 ## Running the demos
 
-Prerequisites: Node 18+ (Part 1), Python 3.9+ and a JDK (Part 2). An API key is only needed
-where noted.
+Prerequisites: Node 20.12+ and `curl` (Part 1), Python 3.9+ and a JDK 17+ (Part 2).
+Steps 1, 4, 5 and 7 need no API key. Steps 2, 3, 6 and `./build.sh run` do.
 
-### 1. Part 1 dashboard
+### 1. Part 1 dashboard — no key
 
 The one to run first. Replays a recording of a real session at its captured timings.
 
@@ -33,28 +33,41 @@ npm run build && npm start
 # open http://localhost:8787 and press "Play session"
 ```
 
-### 2. Part 1, live against the API
+### 2. Part 1, live against the API — needs a key
+
+Continues from step 1: same directory, dependencies and build already in place.
 
 ```bash
 cd part-1-itranslate/demo
 ./audio/fetch_sample.sh                       # audio + reference transcript, ~24 MB (needs ffmpeg or afconvert)
-echo 'ASSEMBLYAI_API_KEY=your_key' > .env     # gitignored
+echo 'ASSEMBLYAI_API_KEY=your_key' > .env     # gitignored; the server reads it at startup
 npm start                                     # "Play session" now runs live
 npm run capture                               # optional: re-record the offline fixture
 ```
 
-### 3. Part 1 handheld simulator
+### 3. Part 1 handheld simulator — needs a key
 
 The device path itself: mints a token, opens its own socket, no key on the device.
+
+Needs the **step 2** server running, not step 1: the device asks it for a token, and a
+server with no key answers that with a 503. `paris.wav` is the file `fetch_sample.sh`
+downloads, so step 2 has to have happened.
 
 ```bash
 cd part-1-itranslate/device
 pip install -r requirements.txt
-python3 device_sim.py --file ../demo/audio/paris.wav --dashboard   # needs the server from step 1 or 2 running
+python3 device_sim.py --file ../demo/audio/paris.wav --dashboard
+```
+
+`--mic` needs PortAudio and sounddevice on top of that — left out of requirements.txt so
+that the `--file` path installs cleanly without them:
+
+```bash
+brew install portaudio && pip install sounddevice
 python3 device_sim.py --mic --dashboard
 ```
 
-### 4. Part 1 tests
+### 4. Part 1 tests — no key
 
 ```bash
 cd part-1-itranslate/demo && npm test         # 15 tests, word error rate engine vs. hand-computed cases
@@ -79,13 +92,16 @@ root cause.
 ```bash
 cd part-2-spanglish/code/python
 pip install -r requirements.txt
-./make_sample.sh                              # macOS: builds a 24s EN/ES courtroom clip
+./make_sample.sh                              # macOS only (say + afconvert): builds a 24s EN/ES clip
 export ASSEMBLYAI_API_KEY=your_key
 python3 repro.py sample_bilingual.wav
 python3 repro.py sample_bilingual.wav --only broken
 ```
 
-### 7. Part 2 scaling model
+Off macOS, skip `make_sample.sh` and pass any 16 kHz mono 16-bit WAV with English and
+Spanish in it — `repro.py` asserts that format rather than resampling.
+
+### 7. Part 2 scaling model — no key
 
 ```bash
 python3 part-2-spanglish/code/python/production_client.py   # cold-start ramp curves to 2,000 streams
