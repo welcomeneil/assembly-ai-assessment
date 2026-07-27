@@ -27,13 +27,13 @@ Three things worth reading the code for:
 Usage:
 
     # against the bundled sample, no microphone needed
-    python3 device_sim.py --file ../demo/audio/herring1.wav --dashboard
+    python3 device_sim.py --file ../demo/audio/paris.wav --dashboard
 
     # with a microphone
     python3 device_sim.py --mic --dashboard
 
     # standalone, no dashboard
-    python3 device_sim.py --file ../demo/audio/herring1.wav
+    python3 device_sim.py --file ../demo/audio/paris.wav
 """
 
 from __future__ import annotations
@@ -278,7 +278,7 @@ def main() -> int:
         description="Simulate the iTranslate handheld against AssemblyAI streaming.",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="examples:\n"
-               "  python3 device_sim.py --file ../demo/audio/herring1.wav --dashboard\n"
+               "  python3 device_sim.py --file ../demo/audio/paris.wav --dashboard\n"
                "  python3 device_sim.py --mic --dashboard\n")
     source = parser.add_mutually_exclusive_group(required=True)
     source.add_argument("--file", help="16 kHz mono WAV to stream")
