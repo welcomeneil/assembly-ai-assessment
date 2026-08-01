@@ -4,7 +4,7 @@
 
 | | | |
 |---|---|---|
-| **[Part 1 — iTranslate](part-1-itranslate/)** | Demo + approach for a handheld translator that wants better speech-to-text | [approach](part-1-itranslate/APPROACH.md) · [measurements](part-1-itranslate/demo/fixtures/MEASUREMENTS.md) |
+| **[Part 1 — iTranslate](method-1-pipeline/)** | Demo + approach for a handheld translator that wants better speech-to-text | [approach](part-1-itranslate/APPROACH.md) · [measurements](part-1-itranslate/demo/fixtures/MEASUREMENTS.md) |
 | **[Part 2 — Spanglish Inc.](part-2-spanglish/)** | Production customer says streaming "doesn't work at all." Fix it, explain it, scale to 2,000 streams | [root cause](part-2-spanglish/01-root-cause.md) · [email](part-2-spanglish/02-customer-email.md) · [scaling](part-2-spanglish/03-scaling-to-2000.md) · [privacy](part-2-spanglish/04-data-privacy.md) · [internal](part-2-spanglish/05-internal-eng-summary.md) · [handoff](part-2-spanglish/06-handoff.md) · [live verification](part-2-spanglish/07-live-verification.md) |
 
 **Part 1 in a sentence.** They asked for accuracy; Universal-3.5 Pro returns a language per turn and follows a mid-sentence
