@@ -9,8 +9,9 @@
 ## Current status
 
 Spanglish escalated while you were out, reporting that our streaming product did not work at all
-and flagging a retention risk. The issue is resolved. The cause was four client-side
-configuration defects. There is no defect in our service.
+and flagging a retention risk. The issue is resolved. The cause was three client-side
+configuration defects plus error handling that discarded our diagnostics. There is no defect in
+our service, and that is now verified against the live API rather than inferred from the docs.
 
 I have sent them corrected code, a scaling guide, and answers to their privacy questions. The
 account is stable and the conversation has moved to their go-live plan.
@@ -21,21 +22,25 @@ Nothing requires immediate action. Five open items are listed below with owners.
 
 ## What happened
 
-Spanglish submitted a Java WebSocket client with four independent defects:
+Spanglish submitted a Java WebSocket client with three independent blocking defects:
 
 1. The file does not compile. `main()` instantiates `StreamingTranscription`, which does not
    exist. The class in the file is `Spanglish`.
-2. The connection URL declares `encoding=opus` while the client transmits raw PCM. The session
-   connects successfully and then produces no transcripts, with no error returned.
+2. The connection URL declares `encoding=opus` while the client transmits raw PCM. The server
+   returns `Error 3006 Failed to decode Opus packet` and closes.
 3. Audio chunks are 25 ms. The API requires 50 to 1000 ms. The server closes the connection with
-   code `3007`.
-4. No `speech_model` is specified, so a bilingual customer was running on whatever their account
-   default resolves to.
+   code `3007` and the exact expected range.
 
 Their error handling discarded every diagnostic the service returned, which is why the report
-reached us with no detail.
+reached us with no detail. That is the actual story of this ticket.
 
-Full analysis: [`01-root-cause.md`](01-root-cause.md).
+A fourth item, no `speech_model` pinned, was originally written up as a blocker on the theory
+that it fell back to an English-only model. **It did not reproduce.** Unpinned sessions resolved
+to `universal-3-5-pro` and transcribed Spanish correctly. It is now a recommendation, not a
+cause, and the customer has been told so explicitly.
+
+Full analysis: [`01-root-cause.md`](01-root-cause.md). Live results and corrections:
+[`07-live-verification.md`](07-live-verification.md).
 
 ---
 
@@ -44,7 +49,7 @@ Full analysis: [`01-root-cause.md`](01-root-cause.md).
 | Deliverable | File | Sent to customer |
 |---|---|---|
 | Corrected Java client, changes marked `FIX #n`, compile-verified on JDK 19 | [`code/java/`](code/java/) | Yes |
-| Reproduction harness: same audio, four configurations | [`code/python/repro.py`](code/python/repro.py) | Yes |
+| Reproduction harness: same audio, four configurations, run against the live API | [`code/python/repro.py`](code/python/repro.py) | Yes |
 | Production reference client: rollover, backoff, backpressure | [`code/python/production_client.py`](code/python/production_client.py) | Yes |
 | Email explaining the cause and the fix | [`02-customer-email.md`](02-customer-email.md) | Yes |
 | Scaling guide to 2,000 concurrent streams | [`03-scaling-to-2000.md`](03-scaling-to-2000.md) | Yes |
@@ -78,11 +83,21 @@ recommendation. Obtain 10 to 20 representative recordings and run the comparison
 the multilingual model performs adequately, the saving is approximately $4,800 per day. If it
 does not, the premium is justified with evidence.
 
-**4. Follow up on internal items A1 through A3.** A3 in particular: I could not determine from
-public documentation which default `speech_model` their account resolves to. The API reference
-and the migration guide contradict each other, and async defaults are grandfathered by account
-creation date. Someone with dashboard access can confirm this quickly. The advice given to the
-customer is correct either way, but the actual value should be established.
+**4. Follow up on internal items A1 through A3.** A3 in particular: public documentation still
+contradicts itself on the default `speech_model`. The API reference and the migration guide
+disagree, and async defaults are grandfathered by account creation date. On the account I tested
+the default was `universal-3-5-pro`, but that is one account on one day, and it is not what the
+migration guide says. Their account should be confirmed from the dashboard rather than assumed
+to match mine. The docs inconsistency is what produced the wrong prediction in the first draft
+of this analysis; it will do the same to a customer.
+
+**5. `speaker_labels` needs a real-audio check before we push it.** On the synthetic test clip,
+enabling `speaker_labels` reduced finalised turns from 4 to 3 and dropped the per-turn Spanish
+language tags. The content still arrives in `SpeakerRevision` messages, so a client that buffers
+by `turn_order` recovers it, but ours prints on `end_of_turn` and lost it. Court transcription
+needs speaker separation, so we cannot simply recommend turning it off. Get 10 to 20 real
+bilingual recordings and measure before telling them either way. Details in
+[`07-live-verification.md`](07-live-verification.md).
 
 ---
 
@@ -95,7 +110,8 @@ customer is correct either way, but the actual value should be established.
 | P3 | Zero retention and reduced async TTL added to the enterprise agreement | Sales, Legal | High | They require a contractual commitment rather than a documentation reference. |
 | P4 | Provide SOC 2 Type 2 report, GDPR assessment, DPA and subprocessor list | You | Medium | Under NDA. |
 | P5 | Confirm they have deployed the regional endpoint change | Spanglish | High | They were using the edge-routed endpoint, which provides no data residency guarantee for court recordings. |
-| A3 | Confirm the default `speech_model` for their account | Engineering | Medium | See above. |
+| A3 | Confirm the default `speech_model` for their account | Engineering | Medium | Resolved to `universal-3-5-pro` on my test account; theirs is unconfirmed. See above. |
+| A8 | Measure `speaker_labels` turn behaviour on real bilingual audio | Engineering | Medium | Cost 1 of 4 turns and all `es` tags on the synthetic clip. Not enough evidence to file. |
 | A7 | Pre-provision their new-session rate budget before go-live | Support, Sales engineering | High | Blocks their cold start. No cost to us. |
 
 ---
@@ -105,8 +121,15 @@ customer is correct either way, but the actual value should be established.
 **They may not have run the code they sent us.** The file does not compile, which is verified. I
 asked what they actually executed and have not received a response. If their production client
 differs from the submitted file, there may be an additional issue we have not seen. I did not
-press the point because they were already frustrated and the four defects account for the
+press the point because they were already frustrated and the three blockers account for the
 reported symptoms. Use your judgement on how firmly to pursue it.
+
+**I corrected two of my own published claims after testing them.** The first analysis said
+`encoding=opus` fails silently and that an unpinned model would give them English-only output.
+Neither is true. Both went to the customer before I had a key, and both are now corrected in
+writing rather than dropped. If they quote the original wording back at you, the corrections and
+the raw transcripts are in [`07-live-verification.md`](07-live-verification.md). I would rather
+they see us revise a claim than defend one.
 
 **Their async workload carries greater privacy exposure than the streaming workload they asked
 about.** Streaming offers zero data retention. Async retains uploaded audio for 24 to 48 hours

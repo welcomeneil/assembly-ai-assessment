@@ -5,6 +5,11 @@
 #   ./build.sh run      compile and run (needs ASSEMBLYAI_API_KEY and a microphone)
 #   ./build.sh original compile the ORIGINAL customer file, to see it fail
 #
+# Arguments after "run" are passed to the client, so a fixed WAV can be streamed instead of
+# opening the microphone:
+#
+#   ./build.sh run --file ../python/sample_bilingual.wav
+#
 set -euo pipefail
 cd "$(dirname "$0")"
 
@@ -43,7 +48,13 @@ javac -Xlint:all -cp "$CP" -d out src/main/java/com/assemblyai/Spanglish.java
 echo "OK -> out/com/assemblyai/Spanglish.class"
 
 if [[ "${1:-}" == "run" ]]; then
-  : "${ASSEMBLYAI_API_KEY:?Set ASSEMBLYAI_API_KEY first}"
+  shift
+  # Load .env from this directory if the key is not already exported, so the demo is one
+  # command rather than one command plus remembering to export first. .env is gitignored.
+  if [[ -z "${ASSEMBLYAI_API_KEY:-}" && -f .env ]]; then
+    set -a; . ./.env; set +a
+  fi
+  : "${ASSEMBLYAI_API_KEY:?Set ASSEMBLYAI_API_KEY, or put it in code/java/.env}"
   echo "Running (Ctrl+C to stop).."
-  java -cp "out:$CP" com.assemblyai.Spanglish
+  java -cp "out:$CP" com.assemblyai.Spanglish "$@"
 fi

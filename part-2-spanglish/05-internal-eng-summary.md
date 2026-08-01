@@ -26,9 +26,14 @@ those be addressed.
 | # | Defect | Service behaviour | Correct per spec |
 |---|---|---|---|
 | 1 | `main()` instantiates a class that does not exist | Request never reached the service | Not applicable |
-| 2 | `encoding=opus` declared while raw PCM is transmitted | Accepted the session, attempted Opus decode, produced no turns | Yes |
-| 3 | 25 ms audio chunks against a 50 to 1000 ms requirement | Closed with `3007 Input duration violation: 25 ms. Expected between 50 and 1000 ms` | Yes |
-| 4 | No `speech_model` specified | Served the account default model | Yes |
+| 2 | `encoding=opus` declared while raw PCM is transmitted | Sent `Begin`, then `Error 3006 Failed to decode Opus packet`, then closed | Yes |
+| 3 | 25 ms audio chunks against a 50 to 1000 ms requirement | Closed with `3007 Input Duration Violation: 25.0 ms. Expected between 50 and 1000 ms` | Yes |
+| 4 | No `speech_model` specified | Served `universal-3-5-pro` and transcribed both languages correctly. Not a contributing cause | Yes |
+
+All four rows verified against the live API on 2026-08-01, superseding the earlier
+docs-only analysis. Defect 4 did not reproduce the predicted failure and has been downgraded
+from a blocker. Details and two further corrections in
+[`07-live-verification.md`](07-live-verification.md).
 
 Full analysis: [`01-root-cause.md`](01-root-cause.md).
 Reproduction harness: [`code/python/repro.py`](code/python/repro.py). It streams identical audio
@@ -99,21 +104,25 @@ maintenance saving. Options in increasing order of cost: publish a fully annotat
 reference implementation in the documentation, support a community-maintained JVM client, or
 reinstate the SDK. The account count should inform that decision.
 
-### 2. `encoding=opus` fails silently when the audio does not match
+### 2. ~~`encoding=opus` fails silently when the audio does not match~~ WITHDRAWN
 
-This is the strongest candidate for a genuine product issue in this ticket.
+I proposed that we emit an explicit `Error` after repeated Opus decode failures, and called it
+the highest value item on this list. **We already do this.** I had written the section before I
+had an API key. Verified 2026-08-01:
 
-When a client declares `encoding=opus` and transmits raw PCM, the handshake succeeds, the `Begin`
-message is delivered, and the connection remains open. No error is returned, no close code is
-sent, and no turns are produced. The client has no signal that anything is wrong.
+```
+[Error] {"type":"Error","error_code":3006,
+         "error":"Failed to decode Opus packet: Invalid data found when processing input"}
+[close] code=3006
+```
 
-**Proposal:** after a number of consecutive audio decode failures with no successful frames
-early in the session, emit an explicit `Error` message before closing. Suggested text: "Failed
-to decode audio as `opus`. If you are sending raw PCM, set `encoding=pcm_s16le`." The condition
-is unambiguous and we already have the information needed to detect it.
+The message names the failure and arrives within the first second. No work required, and no
+product defect in this ticket. Recording it here rather than deleting it because the original
+claim reached the customer-facing analysis and had to be corrected there too.
 
-I consider this the highest value item on the list. It converts our least diagnosable failure
-mode into one a customer can resolve without contacting support.
+The residual point is worth keeping in a different form: our diagnostics are only as good as the
+client's willingness to display them, and a raw-WebSocket customer with `default: break;` in
+`onMessage` sees none of them. That is an argument for item 1, not for a service change.
 
 ### 3. Documentation is inconsistent about the default `speech_model`
 
@@ -187,6 +196,7 @@ Two items require action from other teams:
 ## Summary
 
 We returned correct behaviour and accurate error messages to a client that was unable to display
-them, in a language for which we no longer publish an SDK, using a parameter that fails silently
-when misconfigured. The defect is not in our code. Several of the contributing conditions are
-within our control and should be corrected.
+them, in a language for which we no longer publish an SDK. The defect is not in our code, and
+after live verification there is no product change required either. The contributing conditions
+that are within our control are the missing JVM client and the contradictory documentation on
+default models, and both should be corrected.

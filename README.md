@@ -5,15 +5,15 @@
 | | | |
 |---|---|---|
 | **[Part 1 — iTranslate](part-1-itranslate/)** | Demo + approach for a handheld translator that wants better speech-to-text | [approach](part-1-itranslate/APPROACH.md) · [measurements](part-1-itranslate/demo/fixtures/MEASUREMENTS.md) |
-| **[Part 2 — Spanglish Inc.](part-2-spanglish/)** | Production customer says streaming "doesn't work at all." Fix it, explain it, scale to 2,000 streams | [root cause](part-2-spanglish/01-root-cause.md) · [email](part-2-spanglish/02-customer-email.md) · [scaling](part-2-spanglish/03-scaling-to-2000.md) · [privacy](part-2-spanglish/04-data-privacy.md) · [internal](part-2-spanglish/05-internal-eng-summary.md) · [handoff](part-2-spanglish/06-handoff.md) |
+| **[Part 2 — Spanglish Inc.](part-2-spanglish/)** | Production customer says streaming "doesn't work at all." Fix it, explain it, scale to 2,000 streams | [root cause](part-2-spanglish/01-root-cause.md) · [email](part-2-spanglish/02-customer-email.md) · [scaling](part-2-spanglish/03-scaling-to-2000.md) · [privacy](part-2-spanglish/04-data-privacy.md) · [internal](part-2-spanglish/05-internal-eng-summary.md) · [handoff](part-2-spanglish/06-handoff.md) · [live verification](part-2-spanglish/07-live-verification.md) |
 
 **Part 1 in a sentence.** They asked for accuracy; Universal-3.5 Pro returns a language per turn and follows a mid-sentence
 switch, so two people can just pick the device up and talk. The dashboard shows one tuned
 session running on real spontaneous bilingual audio, scored live against a human transcript.
 
-**Part 2 in a sentence.** No defect on our side — four independent client-side faults, each
-individually fatal, plus error handling that discarded diagnostics, which is why
-their bug report had no detail.
+**Part 2 in a sentence.** No defect on our side — three independent client-side faults, each
+individually fatal, plus error handling that discarded every diagnostic we sent, which is why
+their bug report had no detail. (It was four until I ran it live; see below.)
 
 ---
 
@@ -79,9 +79,20 @@ cd part-1-itranslate/demo && npm test         # 15 tests, word error rate engine
 cd part-2-spanglish/code/java
 ./build.sh original     # 2 errors, on purpose (fetches jars on first run)
 ./build.sh              # clean under -Xlint:all
-export ASSEMBLYAI_API_KEY=your_key
-./build.sh run          # live microphone
 ```
+
+Then run the fixed client end to end. `--file` streams a fixed WAV at real time through the same
+path as the microphone, so the demo is repeatable and needs no capture hardware:
+
+```bash
+export ASSEMBLYAI_API_KEY=your_key
+./build.sh run --file ../python/sample_bilingual.wav   # deterministic, ~25 s
+./build.sh run                                        # live microphone
+```
+
+Expect a session id, per-turn `[en]` / `[es]` tags, a mid-sentence code-switch on the last turn,
+and close code `1000`. `AAI_SPEAKER_LABELS=false` reproduces the speaker-label comparison in
+[07-live-verification.md](part-2-spanglish/07-live-verification.md).
 
 ### 6. Part 2 repro harness — needs an API key
 
@@ -118,7 +129,14 @@ and a longer silence threshold both hurt. Numbers and repeat runs in
 [MEASUREMENTS.md](part-1-itranslate/demo/fixtures/MEASUREMENTS.md). One 56-second clip, so these
 are directional — which is why the harness ships, not just the numbers.
 
-**Part 2 was not run against the live API** The compile failure, the clean
-rebuild, the scaling math and the sample generator were all run locally; the predicted stream
-behaviours (close `3007`, silent Opus decode failure, English-only output) come from the
-published docs. `repro.py` exists so anyone with a key can confirm or refute them in two minutes.
+**Part 2 has now run against the live API too, and it cost me two claims.** The write-up was
+originally docs-only. Running it confirmed the compile failure and the `3007` chunk-size close
+verbatim, and falsified the other two: `encoding=opus` does **not** fail silently, the server
+returns an explicit `3006 Failed to decode Opus packet` that the customer's `default: break;`
+deleted; and the unpinned `speech_model` resolved to `universal-3-5-pro` and transcribed Spanish
+correctly, so that was never a blocker. It also caught a blocker in my own fixed client:
+`language_codes` is a repeated parameter, and the comma-joined form I shipped is rejected on
+connect. Corrections, evidence and the raw transcripts are in
+[07-live-verification.md](part-2-spanglish/07-live-verification.md); the original claims are
+struck through in place rather than quietly edited. The scaling model is still arithmetic,
+nothing was run at concurrency.

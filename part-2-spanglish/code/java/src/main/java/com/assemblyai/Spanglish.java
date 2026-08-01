@@ -14,8 +14,9 @@ import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
@@ -30,15 +31,22 @@ import java.util.concurrent.atomic.AtomicLong;
  * Corrected version of the file Spanglish sent us. Each change is marked with a "FIX #n"
  * comment. The numbers match the defect table in ../../01-root-cause.md.
  *
- * Four defects prevented this from working. Each one is sufficient to break the stream on
+ * Three defects prevented this from working. Each one is sufficient to break the stream on
  * its own:
  *
  *   FIX #1  The file does not compile. main() references a class that does not exist.
  *   FIX #2  The URL declares encoding=opus while the code sends raw PCM.
  *   FIX #3  Audio chunks are 25 ms. The API requires 50 to 1000 ms.
- *   FIX #4  No speech_model is specified, so the connection uses the account default.
+ *
+ * FIX #4, the unpinned speech_model, was written up as a fourth blocker and did not survive
+ * live testing: the account default resolved to universal-3-5-pro and handled Spanish
+ * correctly. It is kept as hygiene, not as a cause. See ../../07-live-verification.md, which
+ * also records FIX #24, a blocker introduced by this file's own first draft.
  *
  * Build and run instructions: see ../README.md
+ *
+ *   ./build.sh run                                    live microphone
+ *   ./build.sh run --file ../python/sample_bilingual.wav   fixed audio, repeatable
  */
 public class Spanglish {
 
@@ -105,23 +113,27 @@ public class Spanglish {
      *   message contains exactly one raw Opus packet. This client captures signed 16-bit
      *   little-endian PCM through javax.sound.sampled and transmits it without encoding it.
      *   The server therefore accepts the connection, sends a Begin message, and then fails to
-     *   decode the audio. No Turn messages are produced and no error is raised. Because the
-     *   connection appears healthy, this failure is difficult to diagnose from the client side.
+     *   decode the audio. Measured 2026-08-01: it reports this explicitly and immediately,
+     *   "Error 3006: Failed to decode Opus packet", and closes. An earlier draft of this comment
+     *   said the failure was silent and undiagnosable from the client side. That was wrong; the
+     *   customer's onMessage discarded the Error message via default: break;, which is FIX #11.
      *   Note also that sample_rate is ignored for the opus, ogg_opus and aac encodings, so that
      *   parameter had no effect either.
      *   Corrected to encoding=pcm_s16le, which matches the captured format.
      *
-     * FIX #4: no speech_model was specified.
-     *   Without this parameter the connection uses the account default. AssemblyAI's
-     *   documentation is inconsistent about what that default is: the streaming API reference
-     *   lists universal-3-5-pro, while the Universal-Streaming migration guide states that an
-     *   omitted speech_model resolves to the English-only model. Async defaults are known to
-     *   vary by account creation date, so the streaming default may vary as well. This has not
-     *   been confirmed for Spanglish's account.
-     *   Production code should not rely on an account default in either case. The model is now
-     *   specified explicitly. language_codes=en,es biases recognition toward English and
-     *   Spanish while still allowing mid-sentence switching between them, which matches the
-     *   interpreter use case.
+     * FIX #4: no speech_model was specified. Downgraded from blocker to hygiene.
+     *   Without this parameter the connection uses the account default. The prediction was that
+     *   an established account resolves to the English-only model and transliterates Spanish.
+     *   Measured 2026-08-01: it resolved to universal-3-5-pro and returned correct Spanish, so
+     *   this was not a cause of the outage. AssemblyAI's documentation is still inconsistent
+     *   about the default, the streaming API reference lists universal-3-5-pro while the
+     *   Universal-Streaming migration guide states an omitted speech_model resolves to the
+     *   English model, and async defaults vary by account creation date. That inconsistency is
+     *   what produced the wrong prediction.
+     *   Production code should not rely on an account default regardless: it is a dependency on
+     *   account state that can change without a deploy. The model stays pinned here.
+     *   language_codes biases recognition toward English and Spanish while still allowing
+     *   mid-sentence switching between them, which matches the interpreter use case.
      *
      * FIX #5: format_turns is deprecated on universal-3-5-pro, where formatting is always
      *   applied. The parameter has no effect and has been removed. See FIX #12 for the related
@@ -134,23 +146,47 @@ public class Spanglish {
     private static final String API_ENDPOINT = buildEndpoint();
 
     private static String buildEndpoint() {
-        Map<String, String> p = new LinkedHashMap<>();
-        p.put("speech_model", "universal-3-5-pro"); // alias: u3-rt-pro
-        p.put("encoding", "pcm_s16le");             // matches the AudioFormat below
-        p.put("sample_rate", String.valueOf(SAMPLE_RATE));
-        p.put("language_codes", "en,es");           // English and Spanish, switching allowed
-        p.put("language_detection", "true");        // adds language_code to each Turn message
-        p.put("speaker_labels", "true");            // separates judge, witness and interpreter
-        p.put("max_speakers", "6");
+        List<String[]> p = new ArrayList<>();
+        p.add(new String[]{"speech_model", "universal-3-5-pro"}); // alias: u3-rt-pro
+        p.add(new String[]{"encoding", "pcm_s16le"});             // matches the AudioFormat below
+        p.add(new String[]{"sample_rate", String.valueOf(SAMPLE_RATE)});
+
+        // FIX #24: language_codes is a repeated query parameter, one code per occurrence.
+        // Sending language_codes=en,es is rejected by the server on connect:
+        //   3006 "User Input Validation Error: Invalid 'language_codes.0': Input should be
+        //   'en', 'es', ... or 'multi'"
+        // The comma-joined value is parsed as a single list element, and "en,es" is not a valid
+        // code. Observed against the live API on 2026-07-31; the connection closes before any
+        // audio is transcribed, so this had to be corrected here too.
+        p.add(new String[]{"language_codes", "en"});
+        p.add(new String[]{"language_codes", "es"});
+
+        p.add(new String[]{"language_detection", "true"}); // adds language_code to each Turn
+
+        // FIX #25: speaker_labels is now switchable, because it is not free.
+        // Measured against the live API on 2026-07-31 with sample_bilingual.wav, holding every
+        // other parameter fixed:
+        //   speaker_labels off -> 4 end_of_turn results, Spanish turns tagged es, full text
+        //   speaker_labels on  -> 3 end_of_turn results, one of them the single word "Mr.",
+        //                         every turn tagged en, most of the Spanish never finalised
+        // Turns still arrive by SpeakerRevision afterwards, so the transcript is recoverable,
+        // but a client that only prints end_of_turn loses them. This is one 24-second synthetic
+        // sample, which is not enough to call it a defect, and separating judge from witness
+        // from interpreter is the whole point for a court record -- so it stays on by default
+        // and is raised with Spanglish as an open item. Set AAI_SPEAKER_LABELS=false to compare.
+        if (!"false".equalsIgnoreCase(getenvOrDefault("AAI_SPEAKER_LABELS", "true"))) {
+            p.add(new String[]{"speaker_labels", "true"}); // judge / witness / interpreter
+            p.add(new String[]{"max_speakers", "6"});
+        }
         // Additional parameters to evaluate with Spanglish:
-        //   p.put("keyterms_prompt", "voir dire,habeas corpus,Miranda,fiscal,testigo");
-        //   p.put("redact_pii", "true");
-        //   p.put("min_turn_silence", "160");  // allows longer interpreter pauses
+        //   keyterms_prompt=voir dire,habeas corpus,Miranda,fiscal,testigo
+        //   redact_pii=true
+        //   min_turn_silence=160   (allows longer interpreter pauses)
 
         StringBuilder qs = new StringBuilder();
-        for (Map.Entry<String, String> e : p.entrySet()) {
+        for (String[] e : p) {
             if (qs.length() > 0) qs.append('&');
-            qs.append(url(e.getKey())).append('=').append(url(e.getValue()));
+            qs.append(url(e[0])).append('=').append(url(e[1]));
         }
         return "wss://" + HOST + "/v3/ws?" + qs;
     }
@@ -176,7 +212,7 @@ public class Spanglish {
     // FIX #9: single latch that signals program completion, released on every exit path.
     // Original: the latch was released only by the shutdown hook. When the server closed the
     // connection, onClose set stopRequested but never released the latch, so main() remained
-    // blocked in latch.await() indefinitely. All four defects above cause a server-side close,
+    // blocked in latch.await() indefinitely. Every blocker above causes a server-side close,
     // so the observed behaviour was a process that produced no output and did not exit.
     private final CountDownLatch finished = new CountDownLatch(1);
 
@@ -196,6 +232,15 @@ public class Spanglish {
     // FIX #21: cleanup() was reachable from both the shutdown hook and the catch block.
     private final AtomicBoolean cleanedUp = new AtomicBoolean(false);
 
+    /**
+     * Optional WAV file to stream instead of the microphone (--file). The mic path is what
+     * Spanglish runs in production; this exists so the client can be demonstrated end to end
+     * against the live API with fixed, repeatable audio and no capture hardware. Everything
+     * downstream of the chunk boundary -- queue, sender thread, message handling, shutdown --
+     * is the same code on both paths.
+     */
+    private String inputFile;
+
     // ---------------------------------------------------------------------------------
     // Entry point
     // ---------------------------------------------------------------------------------
@@ -208,10 +253,19 @@ public class Spanglish {
         // submitted has never been executed, and the code Spanglish actually ran differs from
         // what was sent to us.
         Spanglish transcription = new Spanglish();
-        transcription.run();
+        transcription.run(args);
     }
 
-    public void run() {
+    public void run(String[] args) {
+        for (int i = 0; i < args.length; i++) {
+            if ("--file".equals(args[i]) && i + 1 < args.length) {
+                inputFile = args[++i];
+            } else {
+                System.err.println("Usage: Spanglish [--file <16 kHz mono 16-bit WAV>]");
+                return;
+            }
+        }
+
         // FIX #16: validate the key before opening a connection the server will reject.
         if (API_KEY == null || API_KEY.isBlank()) {
             System.err.println("ASSEMBLYAI_API_KEY is not set. Export it and re-run.");
@@ -222,6 +276,7 @@ public class Spanglish {
         System.out.println("Endpoint: " + API_ENDPOINT);
         System.out.printf("Chunk: %d frames / %d bytes / %d ms%n",
                 FRAMES_PER_CHUNK, BYTES_PER_CHUNK, FRAMES_PER_CHUNK * 1000 / SAMPLE_RATE);
+        System.out.println("Source: " + (inputFile == null ? "microphone" : inputFile));
 
         // FIX #9: the shutdown hook now only sets flags.
         // Original: the hook called cleanup(), which performs blocking network and file I/O.
@@ -233,15 +288,18 @@ public class Spanglish {
         }));
 
         try {
-            recorder = new WavRecorder(
-                    "recorded_audio_" + DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss")
-                            .withZone(ZoneId.systemDefault()).format(Instant.now()) + ".wav",
-                    SAMPLE_RATE, CHANNELS, SAMPLE_SIZE_IN_BITS);
-
-            initializeMicrophone();
+            if (inputFile == null) {
+                recorder = new WavRecorder(
+                        "recorded_audio_" + DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss")
+                                .withZone(ZoneId.systemDefault()).format(Instant.now()) + ".wav",
+                        SAMPLE_RATE, CHANNELS, SAMPLE_SIZE_IN_BITS);
+                initializeMicrophone();
+            }
             connectWebSocket();
 
-            System.out.println("Speak into your microphone in English or Spanish. Ctrl+C to stop.");
+            System.out.println(inputFile == null
+                    ? "Speak into your microphone in English or Spanish. Ctrl+C to stop."
+                    : "Streaming file at real time. Ctrl+C to stop.");
             finished.await();
         } catch (Exception e) {
             System.err.println("Fatal: " + e);
@@ -299,6 +357,15 @@ public class Spanglish {
      */
     private void startAudioStreaming() {
         isRecording.set(true);
+        startSender();
+        if (inputFile != null) {
+            startFileCapture();
+        } else {
+            startMicCapture();
+        }
+    }
+
+    private void startMicCapture() {
         microphone.start();
 
         captureThread = new Thread(() -> {
@@ -320,14 +387,7 @@ public class Spanglish {
                     System.arraycopy(buffer, 0, chunk, 0, off);
 
                     recorder.write(chunk); // FIX #13: write to disk, constant memory
-
-                    // Non-blocking enqueue. If the sender is behind, discard the oldest chunk
-                    // and record the drop rather than blocking the capture thread.
-                    if (!sendQueue.offer(chunk)) {
-                        sendQueue.poll();
-                        sendQueue.offer(chunk);
-                        droppedChunks.incrementAndGet();
-                    }
+                    enqueue(chunk);
                 } catch (Exception e) {
                     if (!stopRequested.get()) {
                         System.err.println("Capture error: " + e);
@@ -338,6 +398,80 @@ public class Spanglish {
             System.out.println("\nCapture stopped.");
         }, "aai-capture");
 
+        captureThread.setDaemon(true);
+        captureThread.start();
+    }
+
+    /**
+     * Streams a WAV file through the same queue and sender as the microphone path, paced to real
+     * time. Pacing matters: the v3 server closes with 3007 when audio arrives faster than it
+     * plays. The trailing remainder shorter than one chunk is dropped rather than sent, because
+     * a message under 50 ms triggers the same 3007.
+     */
+    private void startFileCapture() {
+        captureThread = new Thread(() -> {
+            try (AudioInputStream in = AudioSystem.getAudioInputStream(new File(inputFile))) {
+                AudioFormat f = in.getFormat();
+                if (f.getEncoding() != AudioFormat.Encoding.PCM_SIGNED
+                        || (int) f.getSampleRate() != SAMPLE_RATE
+                        || f.getChannels() != CHANNELS
+                        || f.getSampleSizeInBits() != SAMPLE_SIZE_IN_BITS
+                        || f.isBigEndian()) {
+                    System.err.println("Unsupported WAV format: " + f);
+                    System.err.printf("Expected %d Hz mono %d-bit signed little-endian PCM.%n",
+                            SAMPLE_RATE, SAMPLE_SIZE_IN_BITS);
+                    return;
+                }
+
+                byte[] buffer = new byte[BYTES_PER_CHUNK];
+                long chunkNanos = TimeUnit.MILLISECONDS.toNanos(
+                        FRAMES_PER_CHUNK * 1000L / SAMPLE_RATE);
+                long nextSendAt = System.nanoTime();
+
+                while (!stopRequested.get()) {
+                    int off = 0;
+                    while (off < buffer.length) {
+                        int n = in.read(buffer, off, buffer.length - off);
+                        if (n < 0) break;
+                        off += n;
+                    }
+                    if (off < buffer.length) break; // end of file
+
+                    enqueue(buffer.clone());
+
+                    // Absolute deadline rather than a fixed sleep, so per-chunk overhead does
+                    // not accumulate into sending slower than real time over a long file.
+                    nextSendAt += chunkNanos;
+                    long remaining = nextSendAt - System.nanoTime();
+                    if (remaining > 0) TimeUnit.NANOSECONDS.sleep(remaining);
+                }
+                System.out.println("\nEnd of file.");
+            } catch (InterruptedException ie) {
+                Thread.currentThread().interrupt();
+            } catch (Exception e) {
+                System.err.println("File streaming error: " + e);
+            }
+            // Let the queued tail reach the server before cleanup() sends Terminate.
+            finished.countDown();
+        }, "aai-file");
+
+        captureThread.setDaemon(true);
+        captureThread.start();
+    }
+
+    /**
+     * FIX #7: non-blocking enqueue. If the sender is behind, discard the oldest chunk and record
+     * the drop rather than blocking the capture thread.
+     */
+    private void enqueue(byte[] chunk) {
+        if (!sendQueue.offer(chunk)) {
+            sendQueue.poll();
+            sendQueue.offer(chunk);
+            droppedChunks.incrementAndGet();
+        }
+    }
+
+    private void startSender() {
         senderThread = new Thread(() -> {
             while (!stopRequested.get()) {
                 try {
@@ -363,9 +497,7 @@ public class Spanglish {
             }
         }, "aai-sender");
 
-        captureThread.setDaemon(true);
         senderThread.setDaemon(true);
-        captureThread.start();
         senderThread.start();
     }
 
@@ -545,7 +677,7 @@ public class Spanglish {
         public void onClose(int code, String reason, boolean remote) {
             // FIX #14: translate the close code into a description.
             // Original: the code was printed as a bare integer. The server returns specific
-            // codes and reason strings for these failures, and three of the four defects in
+            // codes and reason strings for these failures, and two of the three blockers in
             // this file produce one. Without a description the information was not usable.
             System.out.printf("%nWebSocket closed: code=%d remote=%s reason=%s%n    %s%n",
                     code, remote, reason, explainCloseCode(code));

@@ -14,7 +14,7 @@ Configs:
   1. broken        exactly what Spanglish sent us: encoding=opus + 25 ms chunks + no model
   2. fix_encoding  pcm_s16le, but still 25 ms chunks      -> isolates the chunk-size bug
   3. fix_chunks    pcm_s16le + 50 ms chunks, no model      -> isolates the language bug
-  4. fixed         pcm_s16le + 50 ms + universal-3-5-pro + language_codes=en,es
+  4. fixed         pcm_s16le + 50 ms + universal-3-5-pro + language_codes=en&language_codes=es
 
 Expected results:
   1. Begin arrives, then the socket dies. No Turn messages, ever.
@@ -68,17 +68,22 @@ CONFIGS = {
     },
     # ---- 4. The recommended production configuration -----------------------------------
     "fixed": {
-        "label": "pcm_s16le + 50 ms + universal-3-5-pro + language_codes=en,es",
+        "label": "pcm_s16le + 50 ms + universal-3-5-pro + language_codes=en&language_codes=es",
         "params": {
             "sample_rate": 16000,
             "encoding": "pcm_s16le",
             "speech_model": "universal-3-5-pro",
-            "language_codes": "en,es",
+            # Repeated parameter, one code per occurrence, NOT a comma-joined string.
+            # language_codes=en,es is rejected on connect with 3006 "Invalid
+            # 'language_codes.0'". Verified against the live API on 2026-07-31.
+            "language_codes": ["en", "es"],
             "language_detection": "true",
-            "speaker_labels": "true",
+            # Off here on purpose. With speaker_labels=true the same audio finalised 3 turns
+            # instead of 5 and tagged the Spanish ones en; see FIX #25 in Spanglish.java.
+            "speaker_labels": "false",
         },
         "chunk_ms": 50,
-        "expect": "Clean bilingual transcript, per-turn language_code, speaker labels.",
+        "expect": "Clean bilingual transcript with a per-turn language_code, close 1000.",
     },
 }
 
@@ -107,7 +112,8 @@ def read_pcm(path: str) -> bytes:
 
 
 def run_config(name: str, cfg: dict, pcm: bytes) -> dict:
-    url = f"wss://{HOST}/v3/ws?{urlencode(cfg['params'])}"
+    # doseq=True so a list value becomes a repeated parameter rather than one joined string.
+    url = f"wss://{HOST}/v3/ws?{urlencode(cfg['params'], doseq=True)}"
     chunk_bytes = int(16000 * (cfg["chunk_ms"] / 1000.0)) * 2  # 16 kHz, 2 bytes/sample
 
     print("\n" + "=" * 78)

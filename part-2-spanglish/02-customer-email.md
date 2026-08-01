@@ -4,25 +4,36 @@ Hi [Name],
 Great to meet you!
 
 I'm Neil, covering for [Colleague]. I found the issue in your snippet. It is fixed, and the working code is attached.
-You had four distinct client-side configuration errors. Your code was also swallowing our API errors, which is why you couldn't debug it. No changes are needed on our side.
+You had three distinct client-side configuration errors. Your code was also swallowing the error messages we were sending you, which is why you couldn't debug it. No changes are needed on our side.
 ## What was wrong
 
-   1. Audio format mismatch: Your URL stated encoding=opus, but your code sends raw 16-bit PCM. We accepted the session but couldn't decode the audio, causing it to fail silently.
-   2. Buffer size too small: FRAMES_PER_BUFFER = 400 sends 25ms of audio. Our API requires 50–1000ms. The server closed the socket with error 3007, but your code hid the message.
-   3. Wrong speech model: No model was specified, defaulting you to English-only. Spanish audio was mistranslated into English. Pinning the correct model fixes this.
-   4. Code won't compile: main() calls StreamingTranscription, but the class is named Spanglish. The code you sent is not the code you ran. Please send the exact executed file so I can check for other issues.
+   1. Code won't compile: main() calls StreamingTranscription, but the class is named Spanglish. The code you sent is not the code you ran. Please send the exact executed file so I can check for other issues.
+   2. Audio format mismatch: Your URL stated encoding=opus, but your code sends raw 16-bit PCM. We returned "Error 3006: Failed to decode Opus packet" within a second of the session opening, then closed the connection.
+   3. Buffer size too small: FRAMES_PER_BUFFER = 400 sends 25ms of audio. Our API requires 50–1000ms. We closed the socket with "3007: Input Duration Violation: 25.0 ms. Expected between 50 and 1000 ms".
+
+I want to be direct about the fourth thing, because it's the important one. We told you what was wrong on both counts, immediately and by name. Your onMessage handler switches on the message type and handles four of them; ours arrived as type "Error", which fell through to `default: break;` and was discarded. Your onClose printed our close code as a bare integer with no explanation. That's why weeks of debugging produced no detail to report — the answers were arriving and being deleted. The attached file logs everything we send.
+
+One thing I checked and want to correct before you hear it elsewhere: I initially expected that not pinning a speech_model would have put you on an English-only model and mangled the Spanish. I tested it, and that isn't what happens — an unpinned session resolved to universal-3-5-pro and transcribed both languages correctly. I've still pinned the model in the attached file, because inheriting a default means your transcription quality can change without you deploying anything, but it was not a cause of your outage.
 
 ## The fix
-These three edits fix all four problems:
+Three edits clear all three blockers:
 
--private static final int FRAMES_PER_BUFFER = 400;   +private static final int FRAMES_PER_BUFFER = 800;   
--"wss://://assemblyai.com"+"wss://://assemblyai.com"+    + "&speech_model=universal-3-5-pro&language_codes=en,es&language_detection=true"
--StreamingTranscription transcription = new StreamingTranscription();+Spanglish transcription = new Spanglish();
+    - private static final int FRAMES_PER_BUFFER = 400;
+    + private static final int FRAMES_PER_BUFFER = 800;
+
+    - "...?sample_rate=16000&encoding=opus&format_turns=true"
+    + "...?encoding=pcm_s16le&sample_rate=16000&speech_model=universal-3-5-pro"
+    +     + "&language_codes=en&language_codes=es&language_detection=true"
+
+    - StreamingTranscription transcription = new StreamingTranscription();
+    + Spanglish transcription = new Spanglish();
+
+Note that language_codes is a repeated parameter, one code per occurrence. Sending language_codes=en,es is rejected on connect with error 3006. I hit that myself while testing the fix.
 
 ## Attached files:
 
-* Spanglish.java: Your corrected file. Fixes the bugs above, plus hidden memory leaks, connection hangs, and error visibility.
-* repro.py: A 2-minute script showing the step-by-step failures and fixes using your audio.
+* Spanglish.java: Your corrected file. Fixes the bugs above, plus hidden memory leaks, connection hangs, and error visibility. Run it against a fixed WAV with `--file yourfile.wav` if you want a repeatable test before wiring the microphone back up.
+* repro.py: A 2-minute script showing the step-by-step failures and fixes using your audio. Every close code quoted above came from this run — you can reproduce all of it on your own key.
 
 ------------------------------
 ## Scaling to 2,000 concurrent streams

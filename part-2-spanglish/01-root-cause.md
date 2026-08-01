@@ -1,10 +1,16 @@
 # Root cause analysis. Spanglish Inc. streaming failure
 
-**Verdict: no defect in the AssemblyAI streaming service.** Four independent client-side
-faults were present simultaneously in the file Spanglish sent us. Each one is sufficient on
-its own to produce "it doesn't work at all." The service behaved to spec throughout, and in
-three of the four cases it emitted the correct diagnostic, which the customer's error
-handling discarded before a human ever saw it.
+**Verdict: no defect in the AssemblyAI streaming service.** Multiple independent client-side
+faults were present simultaneously in the file Spanglish sent us. The service behaved to spec
+throughout, and in **every** case where it could have told them what was wrong, it did, and the
+customer's error handling discarded the message before a human ever saw it.
+
+> **Read [07-live-verification.md](07-live-verification.md) alongside this document.** This
+> analysis was written from the docs, before I had an API key. I have since run all of it live.
+> Blockers 1 and 3 held exactly. Blocker 2 is real but fails **loudly**, not silently, which is
+> the opposite of what I claimed. Blocker 4 did not reproduce at all and has been downgraded to
+> a recommendation. Inline corrections are marked below; the live run also turned up two new
+> defects in my own fixed client, items 24 and 25.
 
 ---
 
@@ -63,8 +69,13 @@ Two follow-on effects worth knowing:
 - `sample_rate` is **ignored** for `opus`, `ogg_opus`, and `aac`, those formats are
   self-describing. So `sample_rate=16000` was doing nothing either.
 - From the customer's seat this looks precisely like "connected fine, product is broken."
-  There is no error to read. This is the failure mode most likely to have produced the
-  "doesn't work at all" phrasing.
+
+> **Corrected 2026-08-01 after running it.** I wrote here that there is no error to read. That
+> is wrong. The server sends an explicit `Error` message, `3006 Failed to decode Opus packet`,
+> and closes. It is not a silent failure; it is a loud one that the customer's `onMessage`
+> discarded, because `Error` is not one of its four handled types and `default: break;` throws
+> the rest away. The diagnosis stands, the "no error to read" claim does not. See
+> [07-live-verification.md](07-live-verification.md).
 
 **Fix:** `encoding=pcm_s16le`.
 
@@ -92,15 +103,21 @@ chunk size.
 
 ---
 
-### Blocker 4, no `speech_model`, so a bilingual customer got the English-only model
+### Blocker 4, no `speech_model` pinned
 
-The URL pins no `speech_model`. A bare v3 URL resolves to an account-level default, and for an
-established account like Spanglish's that is the English-only Universal-Streaming model.
+> **Corrected 2026-08-01 after running it. This one did not reproduce, and it is not a blocker.**
+> I predicted that an unpinned URL resolves to the English-only model on an established account
+> and transliterates Spanish into English-looking tokens. On the account I tested, every
+> unpinned config resolved to `universal-3-5-pro` and returned clean Spanish. The `Begin`
+> message reports the applied model, which is how I checked. Pinning the model is still correct
+> practice, an unpinned default is a silent dependency on account configuration that can change
+> without a deploy, but it is hygiene, not the cause of this outage. Downgraded from Blocker to
+> Recommendation. Evidence in [07-live-verification.md](07-live-verification.md).
 
-For a court proceeding with a Spanish interpreter this is the worst possible outcome: it does
-not error, it does not warn, it just transliterates Spanish into English-looking tokens. Half
-the record comes back as confident nonsense. If they got as far as seeing any output at all,
-*this* is what they saw.
+The URL pins no `speech_model`, so the connection inherits an account-level default. The
+original concern was that for a court proceeding with a Spanish interpreter, an English-only
+model does not error and does not warn, it transliterates Spanish into English-looking tokens,
+and half the record comes back as confident nonsense.
 
 > **Caveat, stated plainly:** AssemblyAI's public docs are inconsistent about the default, > the API reference lists `universal-3-5-pro` as the default, while the Universal-Streaming
 > migration guide says an omitted `speech_model` "defaults to English model." Async defaults
@@ -131,9 +148,9 @@ Numbers match the `// FIX #n` comments in
 | # | Severity | Defect | Effect | Fix |
 |---|---|---|---|---|
 | 1 | **Blocker** | `main()` instantiates non-existent `StreamingTranscription` | Does not compile | Instantiate `Spanglish` |
-| 2 | **Blocker** | `encoding=opus` declared, raw PCM sent | Silent decode failure; `Begin` but never a `Turn` | `encoding=pcm_s16le` |
-| 3 | **Blocker** | 25 ms chunks (`FRAMES_PER_BUFFER = 400`) | Close `3007` input duration violation | 800 frames = 50 ms |
-| 4 | **Blocker** | No `speech_model` pinned | English-only model on Spanish audio | Pin `universal-3-5-pro` + `language_codes=en,es` |
+| 2 | **Blocker** | `encoding=opus` declared, raw PCM sent | `Begin`, then `Error 3006 Failed to decode Opus packet`, then close. Verified live | `encoding=pcm_s16le` |
+| 3 | **Blocker** | 25 ms chunks (`FRAMES_PER_BUFFER = 400`) | Close `3007` input duration violation. Verified live, verbatim | 800 frames = 50 ms |
+| 4 | Recommendation | No `speech_model` pinned | Predicted English-only model; **did not reproduce**, the account default was `universal-3-5-pro`. Pin it anyway so the config cannot drift | Pin `universal-3-5-pro` |
 | 5 | Cleanup | `format_turns=true` | Deprecated on U3.5 Pro (formatting always on) | Remove |
 | 6 | High | Mic line buffer = 800 B (one chunk) | Line overruns → dropped words | ~1 s of slack |
 | 7 | High | `ws.send()` inline in the mic read loop | Network stalls back-pressure audio capture | Bounded queue + sender thread |
@@ -151,6 +168,8 @@ Numbers match the `// FIX #n` comments in
 | 21 | Low | `cleanup()` re-entrant (shutdown hook + `catch` block) | Double close, duplicate WAV write | Idempotence guard |
 | 22 | **Compliance** | Default edge-routed host | **No data-residency guarantee for court audio** | `streaming.us.` / `streaming.eu.` |
 | 23 | Medium | `Begin.configuration` never inspected | The applied model was observable all along and nobody looked | Log and assert it |
+| 24 | **Blocker** | `language_codes=en,es` sent as one comma-joined value | Close `3006 Invalid 'language_codes.0'` before any audio. **My own bug, found by running it** | Repeat the parameter: `language_codes=en&language_codes=es` |
+| 25 | Open item | `speaker_labels=true` | On the test clip: 3 finalised turns instead of 4, and Spanish turns tagged `en`. Content still arrives via `SpeakerRevision` | Keep on for court use, buffer by `turn_order`, apply revisions. Needs real audio before escalating |
 
 Items 18/19 in the source are notes on things the original got **right**, the `AudioFormat`
 signedness and endianness were correct, which is precisely why `encoding=opus` was the
