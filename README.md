@@ -1,6 +1,7 @@
 # AssemblyAI Applied AI Engineering Take-Home
 
 **Loom walkthrough:** https://www.loom.com/share/6607bdbd93434df894b15ca77dc11ce8
+**Loom walkthrough Pt. 2:** https://www.loom.com/share/310ffb5fdd194fc59664dfa4fa7f1f9b
 
 | | | |
 |---|---|---|
