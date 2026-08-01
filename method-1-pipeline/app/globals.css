@@ -1,0 +1,68 @@
+@import "tailwindcss";
+
+/*
+ * Built for a projector in a lit room: dark ground, high contrast, large type,
+ * and one accent colour so the eye knows where to look. The two direction hues
+ * stay distinguishable under the common forms of colour blindness — and the
+ * flag emoji carries the meaning regardless.
+ */
+@theme {
+  --color-ground: #0a0b0e;
+  --color-surface: #15171c;
+  --color-raised: #1c1f26;
+  --color-edge: #282c35;
+  --color-ink: #f4f6fa;
+  --color-muted: #8e96a6;
+  --color-faint: #5b6373;
+  --color-live: #3ddc97;
+  --color-dir-a: #7dd3fc;
+  --color-dir-b: #fbbf85;
+  --color-warn: #f87171;
+}
+
+@theme inline {
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+body {
+  background: var(--color-ground);
+  color: var(--color-ink);
+}
+
+/* The ring around the mic button while it's listening. */
+@keyframes breathe {
+  0%,
+  100% {
+    opacity: 0.9;
+  }
+  50% {
+    opacity: 0.3;
+  }
+}
+
+.breathe {
+  animation: breathe 2s ease-in-out infinite;
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.rise {
+  animation: rise 0.22s ease-out both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .breathe,
+  .rise {
+    animation: none;
+  }
+}
